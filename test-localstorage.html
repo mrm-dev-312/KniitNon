@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test localStorage for KniitNon</title>
+</head>
+<body>
+    <h1>Test localStorage Data</h1>
+    <button onclick="setTestData()">Set Test Data in localStorage</button>
+    <button onclick="checkData()">Check Current Data</button>
+    <button onclick="clearData()">Clear Data</button>
+    <button onclick="goToDashboard()">Go to Dashboard</button>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; background: #f0f0f0; white-space: pre-wrap;"></div>
+
+    <script>
+        const testData = {
+            "summary": "Test conversation about AI in healthcare",
+            "nodes": [
+                {
+                    "id": "1",
+                    "title": "Test AI in Healthcare",
+                    "content": "This is a test node about AI in healthcare applications",
+                    "type": "topic",
+                    "connections": ["2", "3"],
+                    "source": "Test data"
+                },
+                {
+                    "id": "2",
+                    "title": "Medical Diagnosis",
+                    "content": "AI applications in medical diagnosis and imaging",
+                    "type": "subtopic",
+                    "connections": ["1"],
+                    "source": "Test data"
+                },
+                {
+                    "id": "3",
+                    "title": "Predictive Analytics",
+                    "content": "Using AI for predictive healthcare analytics",
+                    "type": "subtopic",
+                    "connections": ["1"],
+                    "source": "Test data"
+                }
+            ]
+        };
+
+        function setTestData() {
+            localStorage.setItem('generated-research-data', JSON.stringify(testData));
+            document.getElementById('output').textContent = 'Test data set in localStorage\n' + JSON.stringify(testData, null, 2);
+        }
+
+        function checkData() {
+            const data = localStorage.getItem('generated-research-data');
+            if (data) {
+                document.getElementById('output').textContent = 'Current localStorage data:\n' + JSON.stringify(JSON.parse(data), null, 2);
+            } else {
+                document.getElementById('output').textContent = 'No data found in localStorage';
+            }
+        }
+
+        function clearData() {
+            localStorage.removeItem('generated-research-data');
+            document.getElementById('output').textContent = 'localStorage data cleared';
+        }
+
+        function goToDashboard() {
+            window.location.href = 'http://localhost:3001/dashboard';
+        }
+    </script>
+</body>
+</html>

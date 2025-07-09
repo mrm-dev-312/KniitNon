@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test KniitNon Workflow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 10px; padding: 10px 20px; background: #007acc; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #005999; }
+        .output { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>KniitNon Workflow Test</h1>
+    
+    <button onclick="generateResearchData()">1. Generate Research Data (API Call)</button>
+    <button onclick="setGeneratedData()">2. Set Generated Data in localStorage</button>
+    <button onclick="checkLocalStorage()">3. Check localStorage</button>
+    <button onclick="clearLocalStorage()">4. Clear localStorage</button>
+    <button onclick="openDashboard()">5. Open Dashboard</button>
+    
+    <div id="output" class="output">Click buttons above to test the workflow...</div>
+
+    <script>
+        const generatedData = {
+            "summary": "Discussion focused on renewable energy, specifically solar power",
+            "nodes": [
+                {
+                    "id": "node1",
+                    "title": "Renewable Energy",
+                    "content": "Renewable energy refers to energy sources that are replenished naturally, such as solar, wind, hydro, geothermal, and biomass.",
+                    "type": "topic",
+                    "connections": ["node2", "node3"],
+                    "source": "Derived from conversation"
+                },
+                {
+                    "id": "node2",
+                    "title": "Solar Power",
+                    "content": "Solar power is energy harnessed from the sun using photovoltaic cells or solar thermal systems.",
+                    "type": "subtopic",
+                    "connections": ["node1", "node4", "node5"],
+                    "source": "Derived from conversation"
+                },
+                {
+                    "id": "node3",
+                    "title": "Sustainable Development",
+                    "content": "Sustainable development meets present needs without compromising future generations' ability to meet their own needs.",
+                    "type": "subtopic",
+                    "connections": ["node1", "node6"],
+                    "source": "Derived from conversation"
+                },
+                {
+                    "id": "node4",
+                    "title": "Photovoltaic Technology",
+                    "content": "Photovoltaic (PV) technology converts sunlight directly into electricity using solar cells.",
+                    "type": "detail",
+                    "connections": ["node2", "node5"],
+                    "source": "Derived from conversation"
+                },
+                {
+                    "id": "node5",
+                    "title": "Solar Thermal Systems",
+                    "content": "Solar thermal systems use sunlight to generate heat for residential heating, hot water, or electricity generation.",
+                    "type": "detail",
+                    "connections": ["node2", "node4"],
+                    "source": "Derived from conversation"
+                },
+                {
+                    "id": "node6",
+                    "title": "Impact of Renewable Energy on Climate Change",
+                    "content": "Transition to renewable energy sources is crucial in combating climate change by reducing fossil fuel reliance.",
+                    "type": "subtopic",
+                    "connections": ["node3"],
+                    "source": "Derived from conversation"
+                }
+            ]
+        };
+
+        async function generateResearchData() {
+            try {
+                updateOutput('🔄 Calling research generation API...', '');
+                
+                const testMessages = [
+                    { role: "user", content: "I want to research machine learning and artificial intelligence" },
+                    { role: "assistant", content: "That's a fascinating field! AI and ML have applications in many areas. What specific aspect interests you?" },
+                    { role: "user", content: "I'm particularly interested in neural networks and deep learning" }
+                ];
+                
+                const response = await fetch('http://localhost:3000/api/research/generate-from-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ messages: testMessages })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    generatedData = data; // Update the global variable
+                    updateOutput('✅ SUCCESS: API call completed\n\nGenerated ' + data.nodes.length + ' nodes:\n' + 
+                                data.nodes.map((n, i) => `${i+1}. ${n.title}`).join('\n'), 'success');
+                } else {
+                    updateOutput('❌ ERROR: API call failed with status ' + response.status, 'error');
+                }
+            } catch (error) {
+                updateOutput('❌ ERROR: API call failed\n' + error.message, 'error');
+            }
+        }
+
+        function setGeneratedData() {
+            try {
+                // Add timestamp to simulate the new persistence mechanism
+                const dataWithTimestamp = {
+                    ...generatedData,
+                    loadedAt: Date.now()
+                };
+                
+                localStorage.setItem('generated-research-data', JSON.stringify(dataWithTimestamp));
+                updateOutput('✅ SUCCESS: Generated research data set in localStorage with timestamp\n\nData includes:\n- ' + generatedData.nodes.length + ' nodes\n- Topics: ' + generatedData.nodes.map(n => n.title).join(', ') + '\n- Timestamp: ' + new Date().toLocaleTimeString(), 'success');
+            } catch (error) {
+                updateOutput('❌ ERROR: Failed to set data in localStorage\n' + error.message, 'error');
+            }
+        }
+
+        function checkLocalStorage() {
+            try {
+                const data = localStorage.getItem('generated-research-data');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    updateOutput('✅ localStorage data found:\n\n' + JSON.stringify(parsed, null, 2), 'success');
+                } else {
+                    updateOutput('❌ No data found in localStorage', 'error');
+                }
+            } catch (error) {
+                updateOutput('❌ ERROR: Failed to check localStorage\n' + error.message, 'error');
+            }
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('generated-research-data');
+            updateOutput('✅ localStorage cleared', 'success');
+        }
+
+        function openDashboard() {
+            // First check if data exists
+            const data = localStorage.getItem('generated-research-data');
+            if (data) {
+                updateOutput('✅ Opening dashboard with localStorage data present\nYou should see generated nodes instead of default data!', 'success');
+                window.open('http://localhost:3000/dashboard', '_blank');
+            } else {
+                updateOutput('⚠️ Opening dashboard without localStorage data\nYou will see default/API data', '');
+                window.open('http://localhost:3000/dashboard', '_blank');
+            }
+        }
+
+        function updateOutput(text, type = '') {
+            const output = document.getElementById('output');
+            output.textContent = text;
+            output.className = 'output ' + type;
+        }
+    </script>
+</body>
+</html>

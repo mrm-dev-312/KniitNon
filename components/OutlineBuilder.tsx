@@ -1,11 +1,28 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
 import { useOutlineStore, OutlineNode } from '@/lib/stores/outline-store';
 import { ItemTypes } from '@/components/providers/DragDropProvider';
 import { Button } from '@/components/ui/button';
-import { Trash2, Download, GripVertical, ExternalLink } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Trash2, Download, GripVertical, ExternalLink, ChevronDown } from 'lucide-react';
+import { convertToMarkdown, convertToText, downloadFile, generateFilename } from '@/lib/export-utils';
 
 interface DraggableOutlineItemProps {
   node: OutlineNode;
@@ -113,6 +130,8 @@ const DraggableOutlineItem: React.FC<DraggableOutlineItemProps> = ({
 };
 
 const OutlineBuilder: React.FC = () => {
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  
   const {
     nodes,
     selectedNodeIds,
@@ -152,26 +171,41 @@ const OutlineBuilder: React.FC = () => {
     reorderNodes(dragIndex, hoverIndex);
   };
 
-  const handleExport = () => {
-    if (!outlineContent) return;
-    
-    // Simple markdown export
-    const markdown = nodes.map(node => {
-      const level = node.type === 'topic' ? '# ' : node.type === 'subtopic' ? '## ' : '### ';
-      let content = `${level}${node.title}\n\n`;
-      if (node.content) {
-        content += `${node.content}\n\n`;
-      }
-      return content;
-    }).join('');
+  const handleClearOutline = () => {
+    setShowClearDialog(true);
+  };
 
-    const blob = new Blob([markdown], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'outline.md';
-    a.click();
-    URL.revokeObjectURL(url);
+  const confirmClearOutline = () => {
+    clearNodes();
+    setShowClearDialog(false);
+  };
+
+  const handleExport = (format: 'markdown' | 'txt') => {
+    if (nodes.length === 0) return;
+    
+    let content: string;
+    let filename: string;
+    let mimeType: string;
+    
+    if (format === 'markdown') {
+      content = convertToMarkdown(nodes, outlineContent, { 
+        format: 'markdown', 
+        includeContent: true, 
+        includeMetadata: false 
+      });
+      filename = generateFilename('outline', 'md');
+      mimeType = 'text/markdown';
+    } else {
+      content = convertToText(nodes, outlineContent, { 
+        format: 'txt', 
+        includeContent: true, 
+        includeMetadata: false 
+      });
+      filename = generateFilename('outline', 'txt');
+      mimeType = 'text/plain';
+    }
+    
+    downloadFile(content, filename, mimeType);
   };
 
   // Fetch outline content when nodes change
@@ -186,19 +220,35 @@ const OutlineBuilder: React.FC = () => {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Outline Builder</h2>
         <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={nodes.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleExport('markdown')}>
+                <Download className="h-4 w-4 mr-2" />
+                Markdown (.md)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('txt')}>
+                <Download className="h-4 w-4 mr-2" />
+                Plain Text (.txt)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExport}
-            disabled={nodes.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearNodes}
+            onClick={handleClearOutline}
             disabled={nodes.length === 0}
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -266,6 +316,26 @@ const OutlineBuilder: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Clear Confirmation Dialog */}
+      <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear Outline</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to clear all nodes from your outline? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClearDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmClearOutline}>
+              Clear Outline
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
