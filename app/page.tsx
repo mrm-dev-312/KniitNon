@@ -1,4 +1,6 @@
 import { Chat } from '@/components/ai/chat';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -8,6 +10,15 @@ export default function Home() {
         <p className="text-center text-muted-foreground mb-8">
           This is a functional, full-stack chat application scaffold.
         </p>
+        
+        <div className="flex gap-4 justify-center mb-8">
+          <Link href="/dashboard">
+            <Button size="lg">
+              Open Research Explorer
+            </Button>
+          </Link>
+        </div>
+        
         <Chat />
       </div>
     </div>

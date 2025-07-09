@@ -18,12 +18,12 @@
 -   [x] Implement basic text formatting (bold, italics, headings) in editor.
 
 ### 2. State Management & Interactivity
--   [ ] Set up client-side state management (Zustand or React Query) for the outline's state (list of nodes, order).
--   [ ] Implement drag-and-drop functionality (React DnD) to move nodes from the visualization into the outline.
--   [ ] Implement selection functionality (checkbox on nodes) as an alternative to drag-and-drop.
--   [ ] Implement drag-and-drop reordering of items *within* the `Outline Builder`.
--   [ ] Connect the `Adjustable Detail Slider` state to the API call for the outline content. When the slider moves, re-fetch the outline with the new detail level.
--   [ ] Implement tools to indicate comparisons and relationships within the outline.
+-   [x] Set up client-side state management (Zustand or React Query) for the outline's state (list of nodes, order).
+-   [x] Implement drag-and-drop functionality (React DnD) to move nodes from the visualization into the outline.
+-   [x] Implement selection functionality (checkbox on nodes) as an alternative to drag-and-drop.
+-   [x] Implement drag-and-drop reordering of items *within* the `Outline Builder`.
+-   [x] Connect the `Adjustable Detail Slider` state to the API call for the outline content. When the slider moves, re-fetch the outline with the new detail level.
+-   [x] Implement tools to indicate comparisons and relationships within the outline.
 
 ### 3. Features
 -   [ ] Implement the "Clear Outline" button functionality.
@@ -43,9 +43,15 @@
 -   [ ] Implement highlighting of scholarly debate, conflicts, and unresolved questions in nodes.
 
 ## AI Writing Assistant (Core MVP)
+-   [ ] Implement a back end system prompt engineering section
+    [ ] Create a system prompt for the AI to follow when generating content.
+    [ ] Create a system prompt for the AI to follow when generating outlines.
+-   [ ] Implement LLM-powered generation of outlines based on user-selected nodes.
 -   [ ] Implement LLM-powered generation of draft content based on outline/knowledge graph.
 -   [ ] Implement ability to expand, refine, or rephrase text sections using AI.
 -   [ ] Implement Model Context Protocol (MCPs) for guiding LLM output.
+-   [ ] Implement AI-powered suggestions for improving outline structure and content.
+-   [ ] Implement AI-powered suggestions for additional nodes to explore based on current outline.
 
 ## User Authentication & Project Management (Core MVP)
 -   [ ] Integrate NextAuth.js with Google and/or GitHub OAuth providers.

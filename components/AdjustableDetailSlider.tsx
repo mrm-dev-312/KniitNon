@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Slider } from '@/components/ui/slider';
+import { useOutlineStore } from '@/lib/stores/outline-store';
 
 export type DetailLevel = 'low' | 'medium' | 'high';
 
@@ -43,8 +44,9 @@ const AdjustableDetailSlider: React.FC<AdjustableDetailSliderProps> = ({
   initialLevel = 'medium',
   className = '',
 }) => {
-  const [currentLevel, setCurrentLevel] = useState<DetailLevel>(initialLevel);
-  const [sliderValue, setSliderValue] = useState([LEVEL_TO_VALUE[initialLevel]]);
+  const { detailLevel, setDetailLevel, fetchOutlineContent, nodes } = useOutlineStore();
+  const [currentLevel, setCurrentLevel] = useState<DetailLevel>(detailLevel || initialLevel);
+  const [sliderValue, setSliderValue] = useState([LEVEL_TO_VALUE[detailLevel || initialLevel]]);
 
   const handleSliderChange = (value: number[]) => {
     const newValue = value[0];
@@ -53,9 +55,23 @@ const AdjustableDetailSlider: React.FC<AdjustableDetailSliderProps> = ({
     const newLevel = DETAIL_LEVELS[newValue];
     if (newLevel && newLevel !== currentLevel) {
       setCurrentLevel(newLevel);
+      setDetailLevel(newLevel);
       onDetailLevelChange(newLevel);
+      
+      // Re-fetch outline content with new detail level if there are nodes
+      if (nodes.length > 0) {
+        fetchOutlineContent(nodes.map(n => n.id));
+      }
     }
   };
+
+  // Sync with store state
+  useEffect(() => {
+    if (detailLevel !== currentLevel) {
+      setCurrentLevel(detailLevel);
+      setSliderValue([LEVEL_TO_VALUE[detailLevel]]);
+    }
+  }, [detailLevel, currentLevel]);
 
   return (
     <div className={`w-full space-y-4 p-4 border rounded-lg bg-card ${className}`}>
