@@ -25,11 +25,10 @@ import {
 import { Trash2, Download, GripVertical, ExternalLink, ChevronDown } from 'lucide-react';
 import { convertToMarkdown, convertToText, downloadFile, generateFilename } from '@/lib/export-utils';
 import { useInView } from 'react-intersection-observer';
-import { PerformanceMonitor, performanceMonitor } from '@/lib/performance';
-import { useFocusTrap, useKeyboardNavigation, ariaAttributes, announceToScreenReader, generateId, KEYS } from '@/lib/accessibility';
+import { PerformanceMonitor } from '@/lib/performance';
 
 // Performance monitoring instance
-const perfMonitor = performanceMonitor;
+const perfMonitor = new PerformanceMonitor();
 
 interface VirtualizedItemProps {
   index: number;
@@ -89,9 +88,7 @@ const DraggableOutlineItem: React.FC<DraggableOutlineItemProps> = ({
 
   // Combine refs
   const combineRefs = useCallback((element: HTMLDivElement | null) => {
-    if (ref.current !== element) {
-      (ref as any).current = element;
-    }
+    ref.current = element;
     inViewRef(element);
   }, [inViewRef]);
 
@@ -209,7 +206,6 @@ const VirtualizedItem: React.FC<VirtualizedItemProps> = ({ index, style, data })
 
 const OutlineBuilder: React.FC = () => {
   const [showClearDialog, setShowClearDialog] = useState(false);
-  const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
   
   const {
     nodes,
@@ -223,61 +219,6 @@ const OutlineBuilder: React.FC = () => {
     addNode,
     fetchOutlineContent,
   } = useOutlineStore();
-
-  // Accessibility IDs
-  const outlineId = generateId('outline');
-  const descriptionId = generateId('outline-description');
-  const statusId = generateId('outline-status');
-  
-  // Focus management for keyboard navigation
-  const listRef = React.useRef<HTMLDivElement>(null);
-  const nodeRefs = React.useRef<Map<string, HTMLDivElement>>(new Map());
-  
-  // Keyboard navigation for outline items
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (nodes.length === 0) return;
-    
-    switch (e.key) {
-      case KEYS.ARROW_DOWN:
-        e.preventDefault();
-        setSelectedNodeIndex(prev => Math.min(prev + 1, nodes.length - 1));
-        break;
-      case KEYS.ARROW_UP:
-        e.preventDefault();
-        setSelectedNodeIndex(prev => Math.max(prev - 1, 0));
-        break;
-      case KEYS.HOME:
-        e.preventDefault();
-        setSelectedNodeIndex(0);
-        break;
-      case KEYS.END:
-        e.preventDefault();
-        setSelectedNodeIndex(nodes.length - 1);
-        break;
-      case KEYS.ENTER:
-      case KEYS.SPACE:
-        e.preventDefault();
-        // Focus the selected node for further interaction
-        const selectedNode = nodes[selectedNodeIndex];
-        if (selectedNode) {
-          const nodeElement = nodeRefs.current.get(selectedNode.id);
-          nodeElement?.focus();
-        }
-        break;
-      case KEYS.ESCAPE:
-        e.preventDefault();
-        // Return focus to the outline container
-        listRef.current?.focus();
-        break;
-    }
-  }, [nodes, selectedNodeIndex]);
-
-  // Update selected node when nodes change
-  useEffect(() => {
-    if (selectedNodeIndex >= nodes.length) {
-      setSelectedNodeIndex(Math.max(0, nodes.length - 1));
-    }
-  }, [nodes.length, selectedNodeIndex]);
 
   // Performance monitoring
   useEffect(() => {
@@ -304,6 +245,7 @@ const OutlineBuilder: React.FC = () => {
         id: item.id,
         title: item.title,
         content: item.content || '',
+        order: nodes.length,
         type: (item.type as 'topic' | 'subtopic' | 'detail') || 'topic',
         metadata: {},
       });
@@ -339,7 +281,7 @@ const OutlineBuilder: React.FC = () => {
     let mimeType: string;
     
     if (format === 'markdown') {
-      content = convertToMarkdown(nodes, undefined, { 
+      content = convertToMarkdown(nodes, { 
         format: 'markdown', 
         includeContent: true, 
         includeMetadata: true 
@@ -347,7 +289,7 @@ const OutlineBuilder: React.FC = () => {
       filename = generateFilename('outline', 'md');
       mimeType = 'text/markdown';
     } else {
-      content = convertToText(nodes, undefined, { 
+      content = convertToText(nodes, { 
         format: 'txt', 
         includeContent: true, 
         includeMetadata: false 
@@ -384,7 +326,7 @@ const OutlineBuilder: React.FC = () => {
   return (
     <div ref={dropRef} className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <h2 id={outlineId} className="text-xl font-semibold">Outline Builder</h2>
+        <h2 className="text-xl font-semibold">Outline Builder</h2>
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -392,7 +334,6 @@ const OutlineBuilder: React.FC = () => {
                 variant="outline"
                 size="sm"
                 disabled={nodes.length === 0}
-                aria-label={`Export outline with ${nodes.length} nodes`}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export
@@ -402,27 +343,11 @@ const OutlineBuilder: React.FC = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Export Format</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => handleExport('markdown')}
-                onKeyDown={(e) => {
-                  if (e.key === KEYS.ENTER || e.key === KEYS.SPACE) {
-                    e.preventDefault();
-                    handleExport('markdown');
-                  }
-                }}
-              >
+              <DropdownMenuItem onClick={() => handleExport('markdown')}>
                 <Download className="h-4 w-4 mr-2" />
                 Markdown (.md)
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => handleExport('txt')}
-                onKeyDown={(e) => {
-                  if (e.key === KEYS.ENTER || e.key === KEYS.SPACE) {
-                    e.preventDefault();
-                    handleExport('txt');
-                  }
-                }}
-              >
+              <DropdownMenuItem onClick={() => handleExport('txt')}>
                 <Download className="h-4 w-4 mr-2" />
                 Plain Text (.txt)
               </DropdownMenuItem>
@@ -433,33 +358,15 @@ const OutlineBuilder: React.FC = () => {
             size="sm"
             onClick={() => setShowClearDialog(true)}
             disabled={nodes.length === 0}
-            aria-label={`Clear all ${nodes.length} nodes from outline`}
           >
             Clear All
           </Button>
         </div>
       </div>
 
-      <div 
-        className={`flex-1 border-2 border-dashed rounded-lg p-4 transition-colors ${
-          isOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-        }`}
-        {...ariaAttributes.region('Research outline workspace', outlineId)}
-        aria-describedby={descriptionId}
-      >
-        <div id={descriptionId} className="sr-only">
-          {nodes.length === 0 
-            ? "Empty outline. Drop research nodes from the visualization to build your outline." 
-            : `Outline containing ${nodes.length} research nodes. Use keyboard navigation to interact with items.`
-          }
-        </div>
-        
-        <div id={statusId} className="sr-only" aria-live="polite" aria-atomic="true">
-          {isLoading && "Loading outline content..."}
-          {error && `Error: ${error}`}
-          {!isLoading && !error && nodes.length === 0 && "Outline is empty. Drop nodes to get started."}
-          {!isLoading && !error && nodes.length > 0 && `Outline contains ${nodes.length} nodes.`}
-        </div>
+      <div className={`flex-1 border-2 border-dashed rounded-lg p-4 transition-colors ${
+        isOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+      }`}>
         {isLoading && (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -494,26 +401,11 @@ const OutlineBuilder: React.FC = () => {
               )}
             </div>
             
-            <div className="text-xs text-muted-foreground mb-2">
-              <span className="sr-only">Keyboard navigation: </span>
-              Use arrow keys to navigate, Enter to interact, Escape to return to list
-            </div>
-            
             {/* Virtualized list for performance */}
             {sortedNodes.length > 10 ? (
-              <div
-                ref={listRef}
-                onKeyDown={handleKeyDown}
-                {...ariaAttributes.listbox(
-                  sortedNodes[selectedNodeIndex]?.id,
-                  outlineId
-                )}
-                className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <List
-                  height={listHeight}
-                  width="100%"
-                  itemCount={sortedNodes.length}
+              <List
+                height={listHeight}
+                itemCount={sortedNodes.length}
                 itemSize={itemHeight}
                 itemData={listData}
                 overscanCount={5}
@@ -521,18 +413,9 @@ const OutlineBuilder: React.FC = () => {
               >
                 {VirtualizedItem}
               </List>
-              </div>
             ) : (
               // Render normally for small lists
-              <div 
-                ref={listRef}
-                onKeyDown={handleKeyDown}
-                {...ariaAttributes.listbox(
-                  sortedNodes[selectedNodeIndex]?.id,
-                  outlineId
-                )}
-                className="space-y-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
+              <div className="space-y-2">
                 {sortedNodes.map((node, index) => (
                   <DraggableOutlineItem
                     key={node.id}

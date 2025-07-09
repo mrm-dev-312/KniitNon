@@ -25,6 +25,8 @@ export interface OutlineState {
   isLoading: boolean;
   error: string | null;
   outlineContent: any | null;
+  conflicts: any[] | null;
+  summary: any | null;
   
   // Actions
   addNode: (node: Omit<OutlineNode, 'order'>) => void;
@@ -39,6 +41,11 @@ export interface OutlineState {
   fetchOutlineContent: (nodeIds?: string[]) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  // Project management actions
+  setNodes: (nodes: OutlineNode[]) => void;
+  setConflicts: (conflicts: any[]) => void;
+  setSummary: (summary: any) => void;
+  loadProject: (projectData: any) => void;
 }
 
 export const useOutlineStore = create<OutlineState>((set, get) => ({
@@ -49,6 +56,8 @@ export const useOutlineStore = create<OutlineState>((set, get) => ({
   isLoading: false,
   error: null,
   outlineContent: null,
+  conflicts: null,
+  summary: null,
 
   // Actions
   addNode: (node) => 
@@ -158,4 +167,24 @@ export const useOutlineStore = create<OutlineState>((set, get) => ({
 
   setError: (error) =>
     set(() => ({ error })),
+
+  // Project management actions
+  setNodes: (nodes) =>
+    set(() => ({ nodes })),
+
+  setConflicts: (conflicts) =>
+    set(() => ({ conflicts })),
+
+  setSummary: (summary) =>
+    set(() => ({ summary })),
+
+  loadProject: (projectData) =>
+    set(() => ({
+      nodes: projectData.nodes || [],
+      conflicts: projectData.conflicts || null,
+      summary: projectData.summary || null,
+      selectedNodeIds: [],
+      outlineContent: null,
+      error: null,
+    })),
 }));
