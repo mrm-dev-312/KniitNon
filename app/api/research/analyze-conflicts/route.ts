@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
 // Validation schema for conflict analysis requests
 const ConflictAnalysisRequestSchema = z.object({
   nodeId: z.string().optional(), // Analyze single node

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
 // Validation schema for conflict detection requests
 const ConflictRequestSchema = z.object({
   nodeIds: z.array(z.string()).min(2).max(20), // Need at least 2 nodes to detect conflicts

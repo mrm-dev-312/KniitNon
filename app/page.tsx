@@ -1,5 +1,8 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 import { Chat } from '@/components/ai/chat';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EndpointMiddleware, ApiUtils } from '@/lib/api-middleware';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
+
 async function handleOutlineGeneration(request: NextRequest) {
   try {
     // Access validated data from middleware

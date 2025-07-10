@@ -2,8 +2,21 @@
 
 ## Critical Bugs 🚨
 
+### Docker Build Architecture Failure
+**Priority: CRITICAL**
+- **Issue**: Docker builds fail during static generation phase with `clientModules` error
+- **Error**: `TypeError: Cannot read properties of undefined (reading 'clientModules')`
+- **Impact**: BLOCKS production deployment - cannot build Docker containers
+- **Status**: Requires immediate architecture refactoring
+- **Root Cause**: Client/server component mismatch in Next.js App Router
+- **Potential Solutions**:
+  - Implement hybrid architecture with strategic server/client boundaries
+  - Move data fetching to Server Components
+  - Configure Next.js to disable static optimization for client-heavy pages
+  - Fix dynamic export placement and container naming inconsistencies
+
 ### OAuth Authentication Error
-**Priority: HIGH**
+**Priority: HIGH** - *Deprioritized per task requirements*
 - **Issue**: OAuth not working - Error: `http://localhost:3000/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F&error=OAuthSignin`
 - **Impact**: Users cannot sign in with Google or GitHub
 - **Status**: Needs investigation and fix
@@ -74,6 +87,7 @@
 
 | Priority | Bug | Estimated Effort | Impact |
 |----------|-----|------------------|---------|
+| CRITICAL | Docker Build Architecture Failure | 8-12 hours | Critical - blocks production deployment |
 | HIGH | OAuth Authentication Error | 2-4 hours | Critical - blocks user login |
 | MEDIUM | D3.js Node Connections | 4-6 hours | High - affects visualization usability |
 | MEDIUM | D3.js Depth Limitation | 6-8 hours | Medium - limits exploration depth |
@@ -106,7 +120,8 @@
 ---
 
 **Last Updated**: July 2025  
-**Total Open Bugs**: 6  
+**Total Open Bugs**: 7  
 **Critical Bugs**: 1  
+**High Priority**: 1  
 **Medium Priority**: 3  
 **Low Priority**: 2

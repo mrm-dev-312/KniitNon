@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
 const aiProvider = process.env.AI_PROVIDER || 'openai';
 
 let aiClient: any;
@@ -20,70 +22,77 @@ if (aiProvider === 'gemini') {
 
 export async function POST(request: Request) {
   try {
-    const { nodeId, title, content, type, lens } = await request.json();
+    const { nodeId, title, content, type, lens, depth, parentId } = await request.json();
 
     if (!title) {
       return NextResponse.json({ error: 'Node title is required' }, { status: 400 });
     }
 
-    // System prompt for drilling down deeper into a specific topic
-    const systemPrompt = `You are a research assistant that helps users explore topics in greater depth by generating more specific, detailed research nodes.
+    // Calculate the next depth level for proper taxonomy progression
+    const currentDepth = depth || 0;
+    const nextDepth = currentDepth + 1;
 
-Given a research node, create 6-10 more specific research nodes that drill deeper into that topic. These should be:
+    // System prompt for taxonomic drilling down with proper depth progression
+    const systemPrompt = `You are a research assistant that creates taxonomic progressions for deep research exploration.
 
-1. More specific subtopics and details
-2. Different aspects and perspectives
-3. Current debates and controversies
-4. Practical applications and case studies
-5. Methodological approaches
-6. Historical developments
-7. Future research directions
-8. Cross-connections to related fields
+OBJECTIVE: Generate 6-10 research nodes that are ONE LEVEL DEEPER in the taxonomic hierarchy than the parent node.
 
-Generate nodes that are more granular and specific than the original node, allowing for deeper academic exploration.
+TAXONOMIC PRINCIPLES:
+- Follow natural classification hierarchies (broad → specific → granular → micro-details)
+- Each new node should be a logical subdivision of the parent topic
+- Maintain conceptual coherence while enabling deeper exploration
+- Create meaningful connections that preserve the research thread
 
-Return a JSON response with this structure:
+PARENT NODE CONTEXT:
+- Title: "${title}"
+- Content: "${content}"
+- Current Depth: ${currentDepth}
+- Target Depth: ${nextDepth}
+- Type: "${type}"
+- Lens: "${lens || 'General'}"
 
+DEPTH GUIDANCE:
+${nextDepth === 1 ? "Create main subtopics and primary categories" : 
+  nextDepth === 2 ? "Create specific aspects and detailed components" : 
+  nextDepth === 3 ? "Create granular elements and specialized areas" : 
+  nextDepth === 4 ? "Create micro-details and technical specifics" : 
+  "Create ultra-specific elements and edge cases"}
+
+REQUIREMENTS:
+1. Each node title should clearly indicate its relationship to the parent
+2. Content should be substantive and academically rigorous
+3. Create logical connections between the new nodes when appropriate
+4. Ensure nodes can be further subdivided for infinite exploration
+5. Maintain the research thread from "${title}" through deeper levels
+
+Return ONLY valid JSON in this exact structure:
 {
   "parentNode": {
     "id": "${nodeId}",
     "title": "${title}",
-    "type": "${type}"
+    "depth": ${currentDepth}
   },
   "drillDownNodes": [
     {
-      "id": "unique-id",
-      "title": "Specific Node Title",
-      "content": "Detailed, specific content with academic depth",
-      "type": "subtopic" | "detail",
-      "connections": ["${nodeId}"], // Always connect back to parent
-      "source": "Academic source or research area",
-      "depth": ${type === 'topic' ? 1 : 2}, // Deeper than parent
-      "lens": "${lens || 'Other'}",
+      "id": "drill-${nodeId}-${Date.now()}-1",
+      "title": "Specific Subdivision Title",
+      "content": "Detailed content that builds on the parent topic with academic depth and specificity appropriate for depth level ${nextDepth}",
+      "type": "${nextDepth === 1 ? 'subtopic' : nextDepth === 2 ? 'detail' : 'micro-detail'}",
+      "connections": ["${nodeId}"],
+      "source": "Research area or academic source",
+      "depth": ${nextDepth},
+      "lens": "${lens || 'General'}",
       "parentId": "${nodeId}",
-      "conflicts": [],
-      "children": [],
-      "parents": ["${nodeId}"]
+      "taxonomy": {
+        "level": ${nextDepth},
+        "parent": "${title}",
+        "branch": "subdivision-name"
+      }
     }
   ]
 }
 
-Guidelines for drilling down:
-- Create 6-10 more specific nodes
-- Each node should be more granular than the parent
-- Include diverse perspectives and approaches
-- Ensure academic rigor and depth
-- Create meaningful connections between the new nodes
-- Include both theoretical and practical aspects
-- Consider current research and future directions
-
-Parent Node Information:
-- Title: "${title}"
-- Content: "${content}"
-- Type: "${type}"
-- Lens: "${lens || 'Other'}"
-
-Generate specific, detailed research nodes that would naturally fall under this parent topic.`;
+CRITICAL: Generate nodes that can themselves be further subdivided to enable infinite drilling down from any topic to any level of detail.`;
 
     let generatedContent: string;
 
@@ -124,24 +133,45 @@ Generate specific, detailed research nodes that would naturally fall under this 
       parsedResponse = createFallbackDrillDown(nodeId, title, content, type, lens);
     }
 
-    // Ensure each node has required fields
-    parsedResponse.drillDownNodes = parsedResponse.drillDownNodes.map((node: any, index: number) => ({
-      id: node.id || `drill-${nodeId}-${Date.now()}-${index}`,
-      title: node.title || `${title} - Aspect ${index + 1}`,
-      content: node.content || `Detailed exploration of ${title} from a specific perspective.`,
-      type: type === 'topic' ? 'subtopic' : 'detail',
-      connections: [nodeId, ...(Array.isArray(node.connections) ? node.connections.filter((id: string) => id !== nodeId) : [])],
-      source: node.source || `Deep dive into ${title}`,
-      depth: type === 'topic' ? 1 : 2,
-      lens: node.lens || lens || 'Other',
-      parentId: nodeId,
-      conflicts: Array.isArray(node.conflicts) ? node.conflicts : [],
-      children: [],
-      parents: [nodeId]
-    }));
+    // Ensure each node has required fields and proper taxonomic structure
+    parsedResponse.drillDownNodes = parsedResponse.drillDownNodes.map((node: any, index: number) => {
+      const nodeDepth = nextDepth;
+      const nodeType = nodeDepth === 1 ? 'subtopic' : nodeDepth === 2 ? 'detail' : 'micro-detail';
+      
+      return {
+        id: node.id || `drill-${nodeId}-${Date.now()}-${index}`,
+        title: node.title || `${title} - Subdivision ${index + 1}`,
+        content: node.content || `Detailed exploration of ${title} at taxonomic level ${nodeDepth}.`,
+        type: nodeType,
+        connections: [nodeId], // Always connect back to parent
+        source: node.source || `Level ${nodeDepth} analysis of ${title}`,
+        depth: nodeDepth,
+        lens: node.lens || lens || 'General',
+        parentId: nodeId,
+        taxonomy: {
+          level: nodeDepth,
+          parent: title,
+          branch: node.taxonomy?.branch || `branch-${index + 1}`
+        }
+      };
+    });
 
-    // Add some interconnections between the new nodes
-    addDrillDownConnections(parsedResponse.drillDownNodes);
+    // Add interconnections between new nodes at the same level (optional)
+    if (parsedResponse.drillDownNodes.length > 1) {
+      // Create some cross-connections between related nodes at the same taxonomic level
+      parsedResponse.drillDownNodes.forEach((node: any, index: number) => {
+        if (index < parsedResponse.drillDownNodes.length - 1) {
+          // Connect each node to the next one to create a chain of related concepts
+          const nextNode = parsedResponse.drillDownNodes[index + 1];
+          if (!node.connections.includes(nextNode.id)) {
+            node.connections.push(nextNode.id);
+          }
+          if (!nextNode.connections.includes(node.id)) {
+            nextNode.connections.push(node.id);
+          }
+        }
+      });
+    }
 
     return NextResponse.json(parsedResponse);
 

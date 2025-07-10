@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withPagination, PaginationParams } from '@/lib/api-pagination';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
 // Mock data for research nodes
 const mockResearchNodes = Array.from({ length: 250 }, (_, i) => ({
   id: `node-${i + 1}`,
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
           total: nodes.length,
           requested: nodeIds.length,
           found: nodes.length,
-          missing: nodeIds.filter(id => !nodes.find(n => n.id === id)),
+          missing: nodeIds.filter((id: string) => !nodes.find(n => n.id === id)),
         } : undefined,
       };
       
@@ -176,21 +178,22 @@ export async function POST(request: NextRequest) {
       const paginatedNodes = filteredNodes.slice(offset, offset + limit);
       
       // Include connection details if requested
-      if (includeConnections) {
-        paginatedNodes.forEach(node => {
-          node.connections = node.connections.map(connId => {
-            const connectedNode = mockResearchNodes.find(n => n.id === connId);
-            return connectedNode ? {
-              id: connectedNode.id,
-              title: connectedNode.title,
-              type: connectedNode.type,
-            } : { id: connId, title: 'Unknown', type: 'unknown' };
-          });
-        });
-      }
+      const nodesWithConnections = includeConnections 
+        ? paginatedNodes.map(node => ({
+            ...node,
+            connectionDetails: node.connections.map(connId => {
+              const connectedNode = mockResearchNodes.find(n => n.id === connId);
+              return connectedNode ? {
+                id: connectedNode.id,
+                title: connectedNode.title,
+                type: connectedNode.type,
+              } : { id: connId, title: 'Unknown', type: 'unknown' };
+            })
+          }))
+        : paginatedNodes;
       
       const response = {
-        data: paginatedNodes,
+        data: nodesWithConnections,
         meta: {
           page,
           limit,

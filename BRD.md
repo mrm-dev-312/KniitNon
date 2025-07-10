@@ -126,12 +126,41 @@ If kniitnon is wildly successful in 3-5 years, the content creation landscape wi
         * Basic search and filtering within the knowledge graph.
         * Selection and "pulling" of nodes/cards from the knowledge graph for outline creation.
     * **Advanced AI Research Assistant:**
-        * LLM integration to perform **pedagogical research** on a given subject, starting with a high-level overview (10,000-foot view).
+        * Adds a new, finer-grained layer to the existing map each time the user drills down, preserving earlier layers as the outline grows from middle-school basics to post-doc frontiers.
         * Ability to progressively drill down into detailed subtopics upon user interaction (e.g., clicking on a node).
         * Automatically suggest and highlight potential connections and relationships between different subtopics as research deepens.
         * Generate summaries of selected nodes or clusters of nodes to inform writing.
         * Suggest related research topics based on current graph content.
         * Integration with Gemini and OpenAI APIs for AI capabilities.
+    **Research Levels:**
+    Middle School
+• Define the topic in plain language.
+• List core facts, everyday examples, and common misconceptions.
+
+High School
+• Add governing principles, simple models, and basic equations.
+• Note historical milestones and key figures.
+• Link related subtopics in a concept map.
+
+College (Undergraduate)
+• Attach disciplinary frameworks, standard methods, and seminal papers.
+• Import quantitative data sets and visual summaries.
+• Flag accepted theories versus active controversies.
+
+Master’s / Early Graduate
+• Critically compare competing models and methodologies.
+• Annotate limits of current evidence and reliability of sources.
+• Cluster literature by research question and approach.
+
+PhD
+• Isolate unresolved problems and formulate testable hypotheses.
+• Design detailed study plans or experiments.
+• Track citation networks to expose unexplored intersections.
+
+Post-doc
+• Integrate findings across adjacent fields.
+• Synthesize new theory or applications and prepare publications.
+• Forecast trends and propose next-stage research directions.
     * **Visual Hierarchy & Outline Builder:**
         * A dedicated area (as shown in the image) where users can drag/drop/arrange selected knowledge graph nodes into a hierarchical outline structure.
         * Tools to indicate comparisons and relationships within the outline.

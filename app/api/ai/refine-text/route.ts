@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 import { TEXT_REFINEMENT_PROMPT } from '@/lib/prompts';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });

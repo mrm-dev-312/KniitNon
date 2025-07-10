@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
 // Validation schema for summary requests
 const SummaryRequestSchema = z.object({
   nodeIds: z.array(z.string()).min(1).max(20), // Limit to reasonable number of nodes

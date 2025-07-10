@@ -25,10 +25,9 @@ import {
 import { Trash2, Download, GripVertical, ExternalLink, ChevronDown } from 'lucide-react';
 import { convertToMarkdown, convertToText, downloadFile, generateFilename } from '@/lib/export-utils';
 import { useInView } from 'react-intersection-observer';
-import { PerformanceMonitor } from '@/lib/performance';
+import { performanceMonitor } from '@/lib/performance';
 
-// Performance monitoring instance
-const perfMonitor = new PerformanceMonitor();
+// Use the existing performance monitor instance
 
 interface VirtualizedItemProps {
   index: number;
@@ -88,7 +87,7 @@ const DraggableOutlineItem: React.FC<DraggableOutlineItemProps> = ({
 
   // Combine refs
   const combineRefs = useCallback((element: HTMLDivElement | null) => {
-    ref.current = element;
+    // ref.current = element;
     inViewRef(element);
   }, [inViewRef]);
 
@@ -110,7 +109,6 @@ const DraggableOutlineItem: React.FC<DraggableOutlineItemProps> = ({
       >
         <div className="flex items-start gap-3">
           <div
-            ref={dragPreview}
             className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -222,17 +220,17 @@ const OutlineBuilder: React.FC = () => {
 
   // Performance monitoring
   useEffect(() => {
-    perfMonitor.startTiming('outline-render', { nodeCount: nodes.length });
+    performanceMonitor.startTiming('outline-render', { nodeCount: nodes.length });
     return () => {
-      perfMonitor.endTiming('outline-render');
+      performanceMonitor.endTiming('outline-render');
     };
   }, [nodes]);
 
   // Sort nodes for consistent ordering
   const sortedNodes = useMemo(() => {
-    perfMonitor.startTiming('nodes-sort');
+    performanceMonitor.startTiming('nodes-sort');
     const sorted = nodes.sort((a, b) => a.order - b.order);
-    perfMonitor.endTiming('nodes-sort');
+    performanceMonitor.endTiming('nodes-sort');
     return sorted;
   }, [nodes]);
 
@@ -240,16 +238,15 @@ const OutlineBuilder: React.FC = () => {
   const [{ isOver }, drop] = useDrop({
     accept: ItemTypes.NODE,
     drop: (item: { id: string; title: string; content?: string; type?: string }) => {
-      perfMonitor.startTiming('add-node-drop');
+      performanceMonitor.startTiming('add-node-drop');
       addNode({
         id: item.id,
         title: item.title,
         content: item.content || '',
-        order: nodes.length,
         type: (item.type as 'topic' | 'subtopic' | 'detail') || 'topic',
         metadata: {},
       });
-      perfMonitor.endTiming('add-node-drop');
+      performanceMonitor.endTiming('add-node-drop');
     },
     collect: (monitor: any) => ({
       isOver: monitor.isOver(),
@@ -261,27 +258,27 @@ const OutlineBuilder: React.FC = () => {
   drop(dropRef);
 
   const handleReorder = useCallback((dragIndex: number, hoverIndex: number) => {
-    perfMonitor.startTiming('reorder-nodes');
+    performanceMonitor.startTiming('reorder-nodes');
     reorderNodes(dragIndex, hoverIndex);
-    perfMonitor.endTiming('reorder-nodes');
+    performanceMonitor.endTiming('reorder-nodes');
   }, [reorderNodes]);
 
   const confirmClearOutline = useCallback(() => {
-    perfMonitor.startTiming('clear-outline');
+    performanceMonitor.startTiming('clear-outline');
     clearNodes();
     setShowClearDialog(false);
-    perfMonitor.endTiming('clear-outline');
+    performanceMonitor.endTiming('clear-outline');
   }, [clearNodes]);
 
   const handleExport = useCallback((format: 'markdown' | 'txt') => {
-    perfMonitor.startTiming('export-outline', { format, nodeCount: nodes.length });
+    performanceMonitor.startTiming('export-outline', { format, nodeCount: nodes.length });
     
     let content: string;
     let filename: string;
     let mimeType: string;
     
     if (format === 'markdown') {
-      content = convertToMarkdown(nodes, { 
+      content = convertToMarkdown(nodes, '', { 
         format: 'markdown', 
         includeContent: true, 
         includeMetadata: true 
@@ -289,7 +286,7 @@ const OutlineBuilder: React.FC = () => {
       filename = generateFilename('outline', 'md');
       mimeType = 'text/markdown';
     } else {
-      content = convertToText(nodes, { 
+      content = convertToText(nodes, '', { 
         format: 'txt', 
         includeContent: true, 
         includeMetadata: false 
@@ -299,15 +296,15 @@ const OutlineBuilder: React.FC = () => {
     }
     
     downloadFile(content, filename, mimeType);
-    perfMonitor.endTiming('export-outline');
+    performanceMonitor.endTiming('export-outline');
   }, [nodes]);
 
   // Fetch outline content when nodes change
   useEffect(() => {
     if (nodes.length > 0) {
-      perfMonitor.startTiming('fetch-outline-content');
+      performanceMonitor.startTiming('fetch-outline-content');
       fetchOutlineContent(nodes.map(n => n.id));
-      perfMonitor.endTiming('fetch-outline-content');
+      performanceMonitor.endTiming('fetch-outline-content');
     }
   }, [nodes, fetchOutlineContent]);
 
@@ -404,6 +401,7 @@ const OutlineBuilder: React.FC = () => {
             {/* Virtualized list for performance */}
             {sortedNodes.length > 10 ? (
               <List
+                width="100%"
                 height={listHeight}
                 itemCount={sortedNodes.length}
                 itemSize={itemHeight}

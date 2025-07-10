@@ -20,11 +20,14 @@ interface VisualizationNode {
   type: 'topic' | 'subtopic' | 'detail';
   connections: string[];
   source?: string;
+  depth?: number; // Taxonomic depth level (0 = root, 1 = subtopic, 2 = detail, etc.)
   url?: string;
   imageUrl?: string;
   tags?: string[];
   isImported?: boolean;
   importedAt?: string;
+  parentId?: string; // For taxonomic relationships
+  lens?: string; // Research lens/perspective
 }
 
 interface DraggableNodeProps {
@@ -102,7 +105,7 @@ const DraggableNode: React.FC<DraggableNodeProps> = ({
 };
 
 const VisualizationCanvas: React.FC = () => {
-  const { selectedNodeIds, toggleNodeSelection, addNodes } = useOutlineStore();
+  const { selectedNodeIds, toggleNodeSelection, addNodes, detailLevel } = useOutlineStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [nodes, setNodes] = useState<VisualizationNode[]>([]);
   const [d3Nodes, setD3Nodes] = useState<D3Node[]>([]);
@@ -114,7 +117,7 @@ const VisualizationCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  // Sample nodes for demonstration
+  // Sample nodes for demonstration with proper taxonomic hierarchy
   const sampleNodes: VisualizationNode[] = [
     {
       id: 'node-1',
@@ -122,7 +125,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Overview of global climate change impacts and causes. This comprehensive topic covers the fundamental science behind climate change, including greenhouse gas emissions, temperature rise patterns, and environmental impacts.',
       type: 'topic',
       connections: ['node-2', 'node-3'],
-      source: 'NASA Climate'
+      source: 'NASA Climate',
+      depth: 0 // Root level
     },
     {
       id: 'node-2',
@@ -130,7 +134,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Analysis of CO2 and greenhouse gas emissions from various sources including industry, transportation, and agriculture. Detailed breakdown of emission sources and reduction strategies.',
       type: 'subtopic',
       connections: ['node-1', 'node-4', 'node-5'],
-      source: 'EPA Reports'
+      source: 'EPA Reports',
+      depth: 1 // Second level
     },
     {
       id: 'node-3',
@@ -138,7 +143,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Documentation of rising sea levels and coastal impacts due to thermal expansion and ice sheet melting. Regional variations and future projections.',
       type: 'subtopic',
       connections: ['node-1', 'node-6'],
-      source: 'NOAA Data'
+      source: 'NOAA Data',
+      depth: 1 // Second level
     },
     {
       id: 'node-4',
@@ -146,7 +152,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Manufacturing and industrial carbon footprint data, including steel, cement, and chemical production emissions.',
       type: 'detail',
       connections: ['node-2'],
-      source: 'Industry Reports'
+      source: 'Industry Reports',
+      depth: 2 // Third level
     },
     {
       id: 'node-5',
@@ -154,7 +161,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Vehicle emissions from cars, trucks, aviation, and shipping. Analysis of electric vehicle adoption impacts.',
       type: 'detail',
       connections: ['node-2'],
-      source: 'Transport Studies'
+      source: 'Transport Studies',
+      depth: 2 // Third level
     },
     {
       id: 'node-6',
@@ -162,7 +170,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Beach and cliff erosion patterns caused by rising sea levels and increased storm intensity.',
       type: 'detail',
       connections: ['node-3'],
-      source: 'Coastal Research'
+      source: 'Coastal Research',
+      depth: 2 // Third level
     },
     {
       id: 'node-7',
@@ -170,7 +179,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Solar, wind, and hydroelectric power as solutions to reduce carbon emissions and combat climate change.',
       type: 'topic',
       connections: ['node-8', 'node-9'],
-      source: 'Energy Research'
+      source: 'Energy Research',
+      depth: 0 // Root level (separate taxonomy branch)
     },
     {
       id: 'node-8',
@@ -178,7 +188,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Photovoltaic technology advances and solar installation trends worldwide.',
       type: 'subtopic',
       connections: ['node-7'],
-      source: 'Solar Industry'
+      source: 'Solar Industry',
+      depth: 1 // Second level
     },
     {
       id: 'node-9',
@@ -186,7 +197,8 @@ const VisualizationCanvas: React.FC = () => {
       content: 'Onshore and offshore wind farm development and efficiency improvements.',
       type: 'subtopic',
       connections: ['node-7'],
-      source: 'Wind Power Association'
+      source: 'Wind Power Association',
+      depth: 1 // Second level
     }
   ];
 
@@ -209,25 +221,53 @@ const VisualizationCanvas: React.FC = () => {
 
   // Convert nodes to D3 format and create links
   useEffect(() => {
+    console.log('Converting nodes to D3 format, total nodes:', nodes.length);
+    
     const d3NodesData: D3Node[] = nodes.map(node => ({
       id: node.id,
       title: node.title,
       content: node.content,
       type: node.type,
       source: node.source,
+      // Include depth and other metadata for proper taxonomic visualization
+      ...(node as any).depth && { depth: (node as any).depth },
+      ...(node as any).parentId && { parentId: (node as any).parentId },
+      ...(node as any).lens && { lens: (node as any).lens },
+      ...(node as any).taxonomy && { taxonomy: (node as any).taxonomy },
     }));
 
     const d3LinksData: D3Link[] = [];
+    const nodeIds = new Set(nodes.map(n => n.id));
+    
     nodes.forEach(node => {
-      node.connections.forEach(connectionId => {
-        if (nodes.find(n => n.id === connectionId)) {
-          d3LinksData.push({
-            source: node.id,
-            target: connectionId,
-            id: `${node.id}-${connectionId}`
-          });
-        }
-      });
+      if (node.connections && Array.isArray(node.connections)) {
+        node.connections.forEach(connectionId => {
+          // Only create links if both nodes exist in the current visualization
+          if (nodeIds.has(connectionId)) {
+            const linkId = `${node.id}-${connectionId}`;
+            const reverseLinkId = `${connectionId}-${node.id}`;
+            
+            // Avoid duplicate links
+            if (!d3LinksData.some(link => link.id === linkId || link.id === reverseLinkId)) {
+              d3LinksData.push({
+                source: node.id,
+                target: connectionId,
+                id: linkId
+              });
+            }
+          }
+        });
+      }
+    });
+
+    console.log('D3 conversion complete:', {
+      nodeCount: d3NodesData.length,
+      linkCount: d3LinksData.length,
+      depthDistribution: d3NodesData.reduce((acc, node) => {
+        const depth = (node as any).depth || 0;
+        acc[depth] = (acc[depth] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>)
     });
 
     setD3Nodes(d3NodesData);
@@ -321,7 +361,18 @@ const VisualizationCanvas: React.FC = () => {
 
       // Try to fetch from API (only if no localStorage data was found)
       console.log('🔄 No localStorage data found, attempting to fetch from /api/research/nodes...');
-      const response = await fetch('/api/research/nodes');
+      
+      // Get current detail level from store
+      const { detailLevel } = useOutlineStore.getState();
+      const apiUrl = new URL('/api/research/nodes', window.location.origin);
+      
+      // Add detail level as a query parameter to filter node granularity
+      if (detailLevel) {
+        apiUrl.searchParams.set('detailLevel', detailLevel);
+      }
+      
+      console.log('📊 Fetching nodes with detail level:', detailLevel);
+      const response = await fetch(apiUrl.toString());
       if (response.ok) {
         const data = await response.json();
         console.log('✅ API response received:', data);
@@ -354,6 +405,16 @@ const VisualizationCanvas: React.FC = () => {
   useEffect(() => {
     fetchNodes();
   }, []);
+
+  // Refetch nodes when detail level changes
+  useEffect(() => {
+    // Only refetch if we're not using localStorage data (generated research)
+    const storedData = localStorage.getItem('generated-research-data');
+    if (!storedData && nodes.length > 0) {
+      console.log('🔄 Detail level changed to:', detailLevel, '- refetching nodes');
+      fetchNodes();
+    }
+  }, [detailLevel]);
 
   const filteredNodes = nodes.filter(node =>
     node.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -429,13 +490,53 @@ const VisualizationCanvas: React.FC = () => {
             return;
           }
           
-          console.log(`Generated ${drillData.drillDownNodes.length} drill-down nodes for: ${node.title} (depth: ${currentDepth + 1})`);
+          console.log(`Generated ${drillData.drillDownNodes.length} drill-down nodes for: ${node.title} (depth: ${currentDepth} → ${currentDepth + 1})`);
           
-          // Add the new nodes to existing nodes instead of replacing
+          // Transform drill-down nodes to ensure they have proper structure
+          const newNodes = drillData.drillDownNodes.map((newNode: any) => ({
+            id: newNode.id,
+            title: newNode.title,
+            content: newNode.content,
+            type: newNode.type,
+            connections: newNode.connections || [node.id],
+            source: newNode.source,
+            depth: newNode.depth || currentDepth + 1,
+            lens: newNode.lens || (node as any).lens || 'General',
+            parentId: node.id,
+            taxonomy: newNode.taxonomy || {
+              level: currentDepth + 1,
+              parent: node.title,
+              branch: newNode.title
+            }
+          }));
+          
+          console.log('Transformed drill-down nodes:', newNodes.map((n: VisualizationNode) => ({
+            id: n.id,
+            title: n.title,
+            depth: n.depth,
+            connections: n.connections,
+            parentId: n.parentId
+          })));
+          
+          // Add the new nodes to existing nodes, ensuring no duplicates
           setNodes(prevNodes => {
-            // Remove any existing drill-down nodes for this parent to avoid duplicates
+            // Remove any existing drill-down nodes for this specific parent to avoid duplicates
             const filteredNodes = prevNodes.filter(n => (n as any).parentId !== node.id);
-            return [...filteredNodes, ...drillData.drillDownNodes];
+            const mergedNodes = [...filteredNodes, ...newNodes];
+            
+            console.log('Node update:', {
+              previousCount: prevNodes.length,
+              filteredCount: filteredNodes.length,
+              newNodesCount: newNodes.length,
+              finalCount: mergedNodes.length,
+              depthDistribution: mergedNodes.reduce((acc, n) => {
+                const depth = (n as any).depth || 0;
+                acc[depth] = (acc[depth] || 0) + 1;
+                return acc;
+              }, {} as Record<number, number>)
+            });
+            
+            return mergedNodes;
           });
         } else {
           console.log(`No more specific subtopics can be generated for: ${node.title}`);

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+// Force dynamic rendering for this route since it uses request.headers
+export const dynamic = 'force-dynamic';
+
 // Validation schema for import requests
 const ImportRequestSchema = z.object({
   type: z.enum(['text', 'link', 'image']),
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
     }
     
     console.error('Error importing node:', error);
+    
     return NextResponse.json({
       success: false,
       error: 'Failed to import node',
@@ -103,6 +107,7 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('Error fetching imported nodes:', error);
+    
     return NextResponse.json({
       success: false,
       error: 'Failed to fetch imported nodes',

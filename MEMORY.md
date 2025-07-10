@@ -27,3 +27,28 @@
 * 2025-07-09: Created a comprehensive HTML test page (workflow-test.html) to simulate and verify the full workflow (API call, localStorage, dashboard load).
 * 2025-07-09: Restarted the dev server and verified the fix: generated nodes now persist and display in the dashboard as intended.
 * 2025-07-09: Documented all lessons learned in MEMORY.md and summarized the debugging/fix process in TASK.md.
+
+## Critical Architecture Lessons Learned (July 2025)
+* 2025-07-10: **CRITICAL**: Discovered Docker build failures due to client/server component architecture mismatch
+  - Issue: Next.js attempting static generation on client-heavy components causes `clientModules` error
+  - Root cause: Heavy use of 'use client' directives throughout app conflicts with static generation
+  - Impact: Docker builds fail at "Generating static pages" phase, preventing production deployment
+  - Solution: Requires hybrid architecture with strategic server/client component separation
+
+* 2025-07-10: **Next.js App Router Architecture Insights**:
+  - `dynamic = 'force-dynamic'` exports must come AFTER imports but BEFORE component definition
+  - Client components should be "islands" within server components for optimal performance
+  - Static generation incompatible with client-heavy applications without proper configuration
+  - Server Actions provide better pattern for data operations than client-side API calls
+
+* 2025-07-10: **Docker Build Optimization Requirements**:
+  - Project naming inconsistency (aipodcastgen vs kniitnon) needs resolution
+  - Environment variables must disable static optimization for client-heavy apps
+  - Dockerfile needs development/production environment handling for Next.js builds
+  - Container architecture should support standalone output mode
+
+* 2025-07-10: **Production Readiness Assessment**:
+  - Project marked as "production-ready" but Docker builds failing = NOT truly production-ready
+  - Architecture refactoring required before genuine production deployment
+  - Need systematic server/client component boundary documentation
+  - Performance optimization requires data fetching migration to server components

@@ -2,8 +2,9 @@ import { OpenAIStream, StreamingTextResponse } from 'ai';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// IMPORTANT! Set the runtime to edge
-export const runtime = 'edge';
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const aiProvider = process.env.AI_PROVIDER || 'openai'; // Default to openai
 

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { useState } from 'react';
 
 export interface PaginationParams {
   page?: number;
@@ -308,64 +307,6 @@ export function withPagination<T>(
   };
 }
 
-/**
- * React hook for managing pagination state
- */
-export function usePagination(initialParams: Partial<PaginationParams> = {}) {
-  const [params, setParams] = useState<PaginationParams>({
-    page: 1,
-    limit: 20,
-    sort: 'id',
-    order: 'desc',
-    ...initialParams,
-  });
-
-  const updateParams = (newParams: Partial<PaginationParams>) => {
-    setParams(prev => ({ ...prev, ...newParams }));
-  };
-
-  const goToPage = (page: number) => {
-    updateParams({ page });
-  };
-
-  const changeLimit = (limit: number) => {
-    updateParams({ limit, page: 1 }); // Reset to first page when changing limit
-  };
-
-  const changeSort = (sort: string, order?: 'asc' | 'desc') => {
-    updateParams({ sort, order: order || 'desc', page: 1 });
-  };
-
-  const search = (searchTerm: string) => {
-    updateParams({ search: searchTerm || undefined, page: 1 });
-  };
-
-  const filter = (filters: Record<string, any>) => {
-    updateParams({ filters, page: 1 });
-  };
-
-  const reset = () => {
-    setParams({
-      page: 1,
-      limit: 20,
-      sort: 'id',
-      order: 'desc',
-      ...initialParams,
-    });
-  };
-
-  return {
-    params,
-    updateParams,
-    goToPage,
-    changeLimit,
-    changeSort,
-    search,
-    filter,
-    reset,
-  };
-}
-
 export default {
   parsePaginationParams,
   calculatePaginationMeta,
@@ -375,5 +316,4 @@ export default {
   validatePaginationParams,
   handlePaginationError,
   withPagination,
-  usePagination,
 };

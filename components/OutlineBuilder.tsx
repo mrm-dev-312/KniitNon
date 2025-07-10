@@ -25,7 +25,7 @@ import {
 import { Trash2, Download, GripVertical, ExternalLink, ChevronDown } from 'lucide-react';
 import { convertToMarkdown, convertToText, downloadFile, generateFilename } from '@/lib/export-utils';
 import { useInView } from 'react-intersection-observer';
-import { PerformanceMonitor, performanceMonitor } from '@/lib/performance';
+import { performanceMonitor } from '@/lib/performance';
 import { useFocusTrap, useKeyboardNavigation, ariaAttributes, announceToScreenReader, generateId, KEYS } from '@/lib/accessibility';
 
 // Performance monitoring instance
@@ -77,9 +77,11 @@ const DraggableOutlineItem: React.FC<DraggableOutlineItemProps> = ({
     }),
   });
 
-  // Combine drag and drop refs
+  // Combine drop ref with intersection observer
   const ref = React.useRef<HTMLDivElement>(null);
-  drag(drop(ref));
+  const dragRef = React.useRef<HTMLDivElement>(null);
+  drop(ref);
+  drag(dragRef);
 
   // Use intersection observer for performance
   const { ref: inViewRef, inView } = useInView({
@@ -113,7 +115,7 @@ const DraggableOutlineItem: React.FC<DraggableOutlineItemProps> = ({
       >
         <div className="flex items-start gap-3">
           <div
-            ref={dragPreview}
+            ref={dragRef}
             className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
