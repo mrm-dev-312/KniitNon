@@ -70,3 +70,52 @@ This log tracks all development activities, decisions, and changes made to the c
 - Leveraging Shadcn/UI components ensures consistent UI/UX.
 - Regular commits and descriptive messages help track progress and avoid conflicts.
 
+---
+**2025-07-10 10:00**
+
+- **Action:** Fixed Docker Build Architecture Failure.
+
+- **Reasoning:** Resolved client/server component mismatch in Next.js App Router causing `clientModules` error.
+
+- **Details:** Added `dynamic = 'force-dynamic'` to API routes, updated Next.js configuration, fixed Prisma schema, and optimized Docker build process.
+
+---
+
+**2025-07-10 10:30**
+
+- **Action:** Fixed D3.js Depth Limitation.
+
+- **Reasoning:** Enhanced API and visualization logic to support unlimited depth progression.
+
+- **Details:** Updated hierarchical taxonomy system, improved depth calculation, and verified functionality through API testing.
+
+---
+
+**2025-07-10 11:00**
+
+- **Action:** Fixed API Detail Level Integration.
+
+- **Reasoning:** Ensured API endpoints respect `detailLevel` query parameter.
+
+- **Details:** Implemented proper filtering logic, updated frontend integration, and verified Zustand store functionality.
+
+---
+
+**2025-07-10 11:30**
+
+- **Action:** Fixed D3.js Node Pinning.
+
+- **Reasoning:** Added functionality to pin nodes in the D3 graph.
+
+- **Details:** Implemented Ctrl+drag and Alt+drag for pinning, added visual indicators, and ensured pinned nodes maintain fixed positions during simulation.
+
+---
+
+**2025-07-10 12:00**
+
+- **Action:** Improved Jest/Cypress Type Conflicts.
+
+- **Reasoning:** Resolved TypeScript parsing errors in Jest configuration.
+
+- **Details:** Fixed `moduleNameMapper`, added `testPathIgnorePatterns`, and improved module mocking logic.
+

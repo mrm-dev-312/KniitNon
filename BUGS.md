@@ -174,10 +174,57 @@
 - Test suite largely functional
 
 
-User responses:
+### User responses:
 Button + Add Selected (<button class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Add Selected (4)</button>) can add unlimited number of times to the outline builder, which means users can add the same node multiple times, leading to potential confusion and clutter in the outline.
 
 Traditional mode did not resolve the no valid nodes found for the provided IDs. 
 When I went back and selected in D3.js mode, it produced the same error.
+I am getting registration failed error when trying to register a new user.
 
+## New Bugs from User Testing 🐞
+
+### Outline Builder Duplication Issue
+
+#### Priority: MEDIUM (Outline Builder)
+
+- **Issue**: Button + Add Selected can add unlimited number of times to the outline builder, leading to potential confusion and clutter.
+- **Impact**: Users can add the same node multiple times, causing redundancy.
+- **Status**: Needs investigation and fix
+- **Potential Causes**:
+  - Lack of validation for duplicate nodes
+  - Missing checks in the outline builder logic
+
+### Traditional Mode Node Error
+
+#### Priority: HIGH (Traditional Mode)
+
+- **Issue**: Traditional mode did not resolve the no valid nodes found for the provided IDs.
+- **Impact**: Users cannot use traditional mode effectively.
+- **Status**: Needs investigation and fix
+- **Potential Causes**:
+  - Incorrect node validation logic
+  - Backend API not returning expected results
+
+### D3.js Mode Node Error
+
+#### Priority: HIGH (D3.js Mode)
+
+- **Issue**: Selecting nodes in D3.js mode produces the same error as traditional mode.
+- **Impact**: Users cannot use D3.js mode effectively.
+- **Status**: Needs investigation and fix
+- **Potential Causes**:
+  - Shared logic between traditional and D3.js modes causing errors
+  - Backend API inconsistencies
+
+### Registration Failed Error
+
+#### Priority: CRITICAL (Registration)
+
+- **Issue**: Registration failed error when trying to register a new user.
+- **Impact**: Blocks new user registration.
+- **Status**: Needs investigation and fix
+- **Potential Causes**:
+  - Backend API issues
+  - Missing or incorrect validation logic
+  - Database constraints or errors
 

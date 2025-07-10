@@ -20,35 +20,49 @@
 * 2025-07-09: Created a comprehensive HTML test page to simulate and verify the full workflow.
 * 2025-07-09: Restarted the dev server and verified the fix works: generated nodes now persist and display in the dashboard as intended.
 ## Debugging and Fixes
-* 2025-07-09: Debugged and fixed the chat-to-dashboard workflow to ensure research nodes generated from chat persist and display in the dashboard.
-* 2025-07-09: Enhanced localStorage persistence for generated research data with a 30-minute expiration using timestamps.
-* 2025-07-09: Improved API data transformation logic to handle both `connections` and `children` fields.
-* 2025-07-09: Added detailed debugging logs to VisualizationCanvas for data flow and timing.
-* 2025-07-09: Created a comprehensive HTML test page (workflow-test.html) to simulate and verify the full workflow (API call, localStorage, dashboard load).
-* 2025-07-09: Restarted the dev server and verified the fix: generated nodes now persist and display in the dashboard as intended.
-* 2025-07-09: Documented all lessons learned in MEMORY.md and summarized the debugging/fix process in TASK.md.
+
+* 2025-07-10: Fixed Docker Build Architecture Failure by resolving client/server component mismatch in Next.js App Router.
+
+* 2025-07-10: Fixed D3.js Depth Limitation by enhancing API and visualization logic to support unlimited depth progression.
+
+* 2025-07-10: Fixed API Detail Level Integration by ensuring API endpoints respect `detailLevel` query parameter.
+
+* 2025-07-10: Fixed D3.js Node Pinning by adding functionality to pin nodes in the D3 graph.
+
+* 2025-07-10: Improved Jest/Cypress Type Conflicts by resolving TypeScript parsing errors in Jest configuration.
 
 ## Critical Architecture Lessons Learned (July 2025)
+
 * 2025-07-10: **CRITICAL**: Discovered Docker build failures due to client/server component architecture mismatch
-  - Issue: Next.js attempting static generation on client-heavy components causes `clientModules` error
-  - Root cause: Heavy use of 'use client' directives throughout app conflicts with static generation
-  - Impact: Docker builds fail at "Generating static pages" phase, preventing production deployment
-  - Solution: Requires hybrid architecture with strategic server/client component separation
 
-* 2025-07-10: **Next.js App Router Architecture Insights**:
-  - `dynamic = 'force-dynamic'` exports must come AFTER imports but BEFORE component definition
-  - Client components should be "islands" within server components for optimal performance
-  - Static generation incompatible with client-heavy applications without proper configuration
-  - Server Actions provide better pattern for data operations than client-side API calls
+  * Issue: Next.js attempting static generation on client-heavy components causes `clientModules` error
 
-* 2025-07-10: **Docker Build Optimization Requirements**:
-  - Project naming inconsistency (aipodcastgen vs kniitnon) needs resolution
-  - Environment variables must disable static optimization for client-heavy apps
-  - Dockerfile needs development/production environment handling for Next.js builds
-  - Container architecture should support standalone output mode
+  * Root cause: Heavy use of 'use client' directives throughout app conflicts with static generation
 
-* 2025-07-10: **Production Readiness Assessment**:
-  - Project marked as "production-ready" but Docker builds failing = NOT truly production-ready
-  - Architecture refactoring required before genuine production deployment
-  - Need systematic server/client component boundary documentation
-  - Performance optimization requires data fetching migration to server components
+  * Impact: Docker builds fail at "Generating static pages" phase, preventing production deployment
+
+  * Solution: Requires hybrid architecture with strategic server/client component separation
+
+  * `dynamic = 'force-dynamic'` exports must come AFTER imports but BEFORE component definition
+
+  * Client components should be "islands" within server components for optimal performance
+
+  * Static generation incompatible with client-heavy applications without proper configuration
+
+  * Server Actions provide better pattern for data operations than client-side API calls
+
+  * Project naming inconsistency (aipodcastgen vs kniitnon) needs resolution
+
+  * Environment variables must disable static optimization for client-heavy apps
+
+  * Dockerfile needs development/production environment handling for Next.js builds
+
+  * Container architecture should support standalone output mode
+
+  * Project marked as "production-ready" but Docker builds failing = NOT truly production-ready
+
+  * Architecture refactoring required before genuine production deployment
+
+  * Need systematic server/client component boundary documentation
+
+  * Performance optimization requires data fetching migration to server components.
