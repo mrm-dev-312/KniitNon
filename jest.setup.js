@@ -8,6 +8,47 @@
 import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'util';
 
+// Add global polyfills for Request/Response
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// Mock Request/Response for Next.js
+if (!global.Request) {
+  global.Request = class MockRequest {
+    constructor(url, options = {}) {
+      this.url = url;
+      this.method = options.method || 'GET';
+      this.headers = new Map(Object.entries(options.headers || {}));
+      this.body = options.body;
+    }
+    
+    async json() {
+      return JSON.parse(this.body || '{}');
+    }
+  };
+}
+
+if (!global.Response) {
+  global.Response = class MockResponse {
+    constructor(body, options = {}) {
+      this.body = body;
+      this.status = options.status || 200;
+      this.statusText = options.statusText || 'OK';
+      this.headers = new Map(Object.entries(options.headers || {}));
+    }
+    
+    static json(data, options = {}) {
+      return new global.Response(JSON.stringify(data), {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+    }
+  };
+}
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {
@@ -250,7 +291,7 @@ jest.mock('@/lib/stores/outline-store', () => ({
     setDetailLevel: jest.fn(),
     toggleNodeSelection: jest.fn(),
   })),
-}));
+}), { virtual: true });
 
 // Mock AI providers
 jest.mock('@google/generative-ai', () => ({

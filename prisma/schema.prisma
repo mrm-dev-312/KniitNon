@@ -40,11 +40,27 @@ model User {
   email         String?     @unique
   emailVerified DateTime?
   image         String?
+  
+  // Username/Password Authentication
+  username      String?     @unique
+  password      String?     // Hashed password
+  
+  // Two-Factor Authentication
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorSecret     String?   // TOTP secret
+  backupCodes         String[]  // Recovery codes
+  
+  // Account Management
+  isActive      Boolean     @default(true)
+  isVerified    Boolean     @default(false)
+  lastLoginAt   DateTime?
+  
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   accounts      Account[]
   savedPaths    SavedPath[]
   sessions      Session[]
+  loginAttempts LoginAttempt[]
 }
 
 model VerificationToken {
@@ -93,4 +109,57 @@ model Conflict {
   description String
   createdAt   DateTime @default(now())
   nodes       Node[]   @relation("ConflictNodes")
+}
+
+// Enhanced Authentication Models
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  userId      String?
+  email       String?
+  ipAddress   String
+  userAgent   String?
+  success     Boolean
+  failureReason String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([token])
+  @@index([expires])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([token])
+  @@index([expires])
+}
+
+model TwoFactorToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@index([token])
+  @@index([expires])
 }

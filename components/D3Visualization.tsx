@@ -173,7 +173,7 @@ const D3Visualization: React.FC<D3VisualizationProps> = ({
       .force('link', d3.forceLink<D3Node, D3Link>(links)
         .id(d => d.id)
         .distance((link) => {
-          // Hierarchical link distance based on node sizes and depth
+          // Improved distance calculation for better connectivity
           const sourceDepth = (link.source as D3Node).depth || 0;
           const targetDepth = (link.target as D3Node).depth || 0;
           const depthDiff = Math.abs(sourceDepth - targetDepth);
@@ -184,27 +184,27 @@ const D3Visualization: React.FC<D3VisualizationProps> = ({
           const avgRadius = (sourceRadius + targetRadius) / 2;
           
           // Base distance scales with node size + additional spacing
-          const baseDistance = avgRadius * 3 + 60;
+          const baseDistance = avgRadius * 2.5 + 40; // Reduced for tighter connections
           
           // Parent-child relationships are closer, siblings are further apart
-          return depthDiff === 1 ? baseDistance : baseDistance * 1.8;
+          return depthDiff === 1 ? baseDistance : baseDistance * 1.4; // Reduced multiplier
         })
-        .strength(0.8)  // Stronger link strength for stability
+        .strength(1.0)  // Increased link strength for better connectivity
       )
       .force('charge', d3.forceManyBody()
         .strength((node) => {
-          // Repulsion based on node size and depth to prevent overlap
+          // Improved repulsion based on node size and depth
           const depth = (node as D3Node).depth || 0;
           const radius = getNodeRadius((node as D3Node).type, depth);
           
-          // Larger nodes have stronger repulsion to maintain hierarchy
-          const baseStrength = -150; // Reduced from -300 to prevent excessive spinning
-          const sizeMultiplier = radius / 20; // Scale with node size
-          const depthMultiplier = 1 + (depth * 0.2); // Gentler depth scaling
+          // Balanced repulsion to prevent overlap while maintaining connections
+          const baseStrength = -120; // Further reduced to prevent excessive repulsion
+          const sizeMultiplier = radius / 25; // Reduced size impact
+          const depthMultiplier = 1 + (depth * 0.15); // Gentler depth scaling
           
           return baseStrength * sizeMultiplier * depthMultiplier;
         })
-        .distanceMax(300) // Reduced max distance to contain forces
+        .distanceMax(250) // Reduced max distance for better connectivity
       )
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide()
@@ -345,7 +345,7 @@ const D3Visualization: React.FC<D3VisualizationProps> = ({
       .attr('stroke-width', 3)
       .attr('opacity', d => selectedNodeIds.includes(d.id) ? 1 : 0);
 
-    // Add drag behavior
+    // Add drag behavior with pinning support
     const dragBehavior = d3.drag<SVGGElement, D3Node>()
       .on('start', (event, d) => {
         if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -358,13 +358,49 @@ const D3Visualization: React.FC<D3VisualizationProps> = ({
       })
       .on('end', (event, d) => {
         if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        
+        // Check for pinning (Ctrl+drag or Alt+drag) 
+        if (event.sourceEvent.ctrlKey || event.sourceEvent.altKey) {
+          // Pin the node by keeping fixed positions
+          d.fx = event.x;
+          d.fy = event.y;
+          // Add visual indicator for pinned node
+          d3.select(event.target.parentNode).select('.pin-indicator')
+            .style('opacity', 1);
+        } else {
+          // Unpin the node
+          d.fx = null;
+          d.fy = null;
+          // Hide pin indicator
+          d3.select(event.target.parentNode).select('.pin-indicator')
+            .style('opacity', 0);
+        }
       });
+
+    // Add pin indicators
+    nodeGroups
+      .append('circle')
+      .attr('class', 'pin-indicator')
+      .attr('r', 4)
+      .attr('cx', d => {
+        const depth = d.depth || 0;
+        const radius = getNodeRadius(d.type, depth);
+        return radius * 0.7; // Position on the edge of the node
+      })
+      .attr('cy', d => {
+        const depth = d.depth || 0;
+        const radius = getNodeRadius(d.type, depth);
+        return -radius * 0.7;
+      })
+      .attr('fill', '#ef4444')
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 1)
+      .style('opacity', d => (d.fx !== null && d.fy !== null) ? 1 : 0)
+      .style('pointer-events', 'none');
 
     nodeGroups.call(dragBehavior);
 
-    // Add click handlers
+    // Add enhanced click handlers with drill-down support
     nodeGroups
       .on('click', (event, d) => {
         event.stopPropagation();
@@ -378,10 +414,16 @@ const D3Visualization: React.FC<D3VisualizationProps> = ({
       })
       .on('dblclick', (event, d) => {
         event.stopPropagation();
-        onNodeDoubleClick(d);
+        
+        // Double-click for drill-down or expansion
+        if (onNodeDrillDown) {
+          onNodeDrillDown(d);
+        } else {
+          onNodeDoubleClick(d);
+        }
       })
       .on('contextmenu', (event, d) => {
-        // Right-click for drill-down
+        // Right-click for drill-down menu
         event.preventDefault();
         if (onNodeDrillDown) {
           onNodeDrillDown(d);

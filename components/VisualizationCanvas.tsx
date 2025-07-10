@@ -278,89 +278,8 @@ const VisualizationCanvas: React.FC = () => {
     console.log('=== VisualizationCanvas fetchNodes called ===');
     setIsLoading(true);
     try {
-      // First check if there's generated research data from chat
-      const storedData = localStorage.getItem('generated-research-data');
-      console.log('Checking for stored research data:', !!storedData);
-      console.log('Raw localStorage data:', storedData);
-      
-      if (storedData) {
-        const generatedData = JSON.parse(storedData);
-        
-        // Check if data is too old (older than 30 minutes) and clear it
-        const loadedAt = generatedData.loadedAt;
-        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
-        
-        if (loadedAt && loadedAt < thirtyMinutesAgo) {
-          console.log('🧹 Clearing old localStorage data (older than 30 minutes)');
-          localStorage.removeItem('generated-research-data');
-          // Fall through to API fetch below
-        } else {
-          console.log('Parsed generated data structure:', {
-            hasNodes: !!generatedData.nodes,
-            isArray: Array.isArray(generatedData.nodes),
-            nodeCount: generatedData.nodes?.length || 0,
-            loadedAt: loadedAt ? new Date(loadedAt).toLocaleTimeString() : 'unknown',
-            sampleNode: generatedData.nodes?.[0]
-          });
-          
-          if (generatedData.nodes && Array.isArray(generatedData.nodes)) {
-            console.log('✅ Using generated research data from chat - nodes count:', generatedData.nodes.length);
-            
-            // Transform the generated nodes to match our interface
-            const transformedNodes: VisualizationNode[] = generatedData.nodes.map((node: any, index: number) => {
-              const connectionType = typeof node.connections;
-              const transformedConnections = connectionType === 'string' 
-                ? node.connections.split(' ').filter(Boolean)
-                : (node.connections || []);
-              
-              console.log(`Node ${index + 1} transformation:`, {
-                id: node.id,
-                title: node.title?.substring(0, 30) + '...',
-                connectionType,
-                originalConnections: node.connections,
-                transformedConnections
-              });
-              
-              return {
-                id: node.id,
-                title: node.title,
-                content: node.content,
-                type: node.type,
-                connections: transformedConnections,
-                source: node.source
-              };
-            });
-            
-            console.log('✅ Setting transformed nodes:', transformedNodes.length);
-            setNodes(transformedNodes);
-            setShowChatDataNotification(true);
-            // Hide notification after 5 seconds
-            setTimeout(() => setShowChatDataNotification(false), 5000);
-            
-            // Don't immediately clear the localStorage - let it persist for this session
-            // We'll add a timestamp and clear it after a reasonable time period
-            const dataWithTimestamp = { ...generatedData, loadedAt: Date.now() };
-            localStorage.setItem('generated-research-data', JSON.stringify(dataWithTimestamp));
-            console.log('✅ localStorage data persisted with timestamp for session');
-            setIsLoading(false);
-            
-            // Force update the search term to trigger re-render if needed
-            setSearchTerm('');
-            return;
-          } else {
-            console.log('❌ Generated data does not have valid nodes array:', {
-              hasNodes: !!generatedData.nodes,
-              nodesType: typeof generatedData.nodes,
-              isArray: Array.isArray(generatedData.nodes)
-            });
-          }
-        }
-      } else {
-        console.log('❌ No stored research data found in localStorage');
-      }
-
-      // Try to fetch from API (only if no localStorage data was found)
-      console.log('🔄 No localStorage data found, attempting to fetch from /api/research/nodes...');
+      // Try to fetch from API first
+      console.log('🔄 Attempting to fetch from /api/research/nodes...');
       
       // Get current detail level from store
       const { detailLevel } = useOutlineStore.getState();
@@ -386,12 +305,69 @@ const VisualizationCanvas: React.FC = () => {
         }));
         console.log('✅ Using API data, transformed nodes count:', transformedNodes.length);
         setNodes(transformedNodes);
+        return; // Exit early if API was successful
       } else {
         console.log('❌ API not available, status:', response.status);
         throw new Error('API not available');
       }
-    } catch (error) {
-      console.log('❌ Error occurred, using sample data:', error instanceof Error ? error.message : String(error));
+    } catch (apiError) {
+      console.log('❌ API error, checking for stored data:', apiError instanceof Error ? apiError.message : String(apiError));
+      
+      // Fallback: check if there's generated research data from chat
+      const storedData = localStorage.getItem('generated-research-data');
+      console.log('Checking for stored research data:', !!storedData);
+      
+      if (storedData) {
+        const generatedData = JSON.parse(storedData);
+        
+        // Check if data is too old (older than 30 minutes) and clear it
+        const loadedAt = generatedData.loadedAt;
+        const thirtyMinutesAgo = Date.now() - (30 * 60 * 1000);
+        
+        if (loadedAt && loadedAt < thirtyMinutesAgo) {
+          console.log('🧹 Clearing old localStorage data (older than 30 minutes)');
+          localStorage.removeItem('generated-research-data');
+          // Fall through to sample data below
+        } else {
+          console.log('Parsed generated data structure:', {
+            hasNodes: !!generatedData.nodes,
+            isArray: Array.isArray(generatedData.nodes),
+            nodeCount: generatedData.nodes?.length || 0,
+            loadedAt: loadedAt ? new Date(loadedAt).toLocaleTimeString() : 'unknown'
+          });
+          
+          if (generatedData.nodes && Array.isArray(generatedData.nodes)) {
+            console.log('✅ Using generated research data from chat - nodes count:', generatedData.nodes.length);
+            
+            // Transform the generated nodes to match our interface
+            const transformedNodes: VisualizationNode[] = generatedData.nodes.map((node: any, index: number) => {
+              const connectionType = typeof node.connections;
+              const transformedConnections = connectionType === 'string' 
+                ? node.connections.split(' ').filter(Boolean)
+                : (node.connections || []);
+              
+              return {
+                id: node.id,
+                title: node.title,
+                content: node.content,
+                type: node.type,
+                connections: transformedConnections,
+                source: node.source
+              };
+            });
+            
+            console.log('✅ Setting transformed nodes:', transformedNodes.length);
+            setNodes(transformedNodes);
+            setShowChatDataNotification(true);
+            // Hide notification after 5 seconds
+            setTimeout(() => setShowChatDataNotification(false), 5000);
+            return;
+          }
+        }
+      }
+      
+      // Final fallback: use sample data
+      console.log('❌ Using sample data as final fallback');
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       console.log('✅ Using sample data, node count:', sampleNodes.length);

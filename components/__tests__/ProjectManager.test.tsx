@@ -3,7 +3,11 @@ import { useSession } from 'next-auth/react';
 import { ProjectManager } from '../ProjectManager';
 
 // Mock next-auth
-jest.mock('next-auth/react');
+jest.mock('next-auth/react', () => ({
+  useSession: jest.fn(),
+}));
+
+const mockUseSession = useSession as jest.MockedFunction<typeof useSession>;
 
 // Mock outline store
 const mockLoadProject = jest.fn();
@@ -19,8 +23,6 @@ const mockOutlineStore = {
 jest.mock('@/lib/stores/outline-store', () => ({
   useOutlineStore: () => mockOutlineStore,
 }));
-
-const mockUseSession = useSession as jest.MockedFunction<typeof useSession>;
 
 // Mock fetch
 global.fetch = jest.fn();
