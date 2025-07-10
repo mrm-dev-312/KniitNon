@@ -1,15 +1,14 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 import React from 'react';
 import OutlineBuilder from '@/components/OutlineBuilder';
 import AdjustableDetailSlider from '@/components/AdjustableDetailSlider';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
+import { AuthButton } from '@/components/AuthButton';
+import { ProjectManager } from '@/components/ProjectManager';
 import { DetailLevel } from '@/components/AdjustableDetailSlider';
 
-export default function DashboardPage() {
+export default function DashboardClient() {
   const handleDetailLevelChange = (level: DetailLevel) => {
     console.log('Detail level changed to:', level);
   };
@@ -19,8 +18,12 @@ export default function DashboardPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="h-16 border-b flex items-center px-6">
+        <div className="h-16 border-b flex items-center justify-between px-6">
           <h1 className="text-2xl font-bold">Research Explorer</h1>
+          <div className="flex items-center gap-3">
+            <ProjectManager />
+            <AuthButton />
+          </div>
         </div>
         
         {/* Visualization Area */}
