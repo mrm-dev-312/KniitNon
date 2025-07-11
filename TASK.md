@@ -30,15 +30,9 @@ All core MVP and Post-MVP features have been successfully implemented:
 ### Critical Issues
 - [ ] OAuth Authentication Error (HIGH priority) - *Deprioritized per task requirements*
 
-### Other Issues  
-- [x] D3.js Node Connection Issues (MEDIUM priority) - **FIXED**: Improved taxonomic force simulation ✅
-- [x] D3.js Depth Limitation (MEDIUM priority) - **FIXED**: Unlimited depth with proper taxonomy progression ✅  
-- [x] API Detail Level Integration (MEDIUM priority) - **FIXED**: API respects detail level parameter ✅
-- [x] D3.js Node Spacing & Colorization (MEDIUM priority) - **FIXED**: Hierarchical sizing + no spinning ✅
+### Other Issues
 - [ ] Jest/Cypress Type Conflicts (LOW priority)
 - [ ] D3.js Node Pinning (LOW priority)
-
-**See [BUGS.md](./BUGS.md) for detailed bug information and fix strategies.**
 
 ## 🚀 ENHANCEMENTS (15+ Planned)
 
@@ -49,14 +43,14 @@ All core MVP and Post-MVP features have been successfully implemented:
 
 ### Medium Priority
 - [ ] Bulletin board for Traditional View where user can move and pin each card and then tie thread between them like a mind map
-- [ ] Advanced D3.js Visualization Features: 
+- [ ] Advanced D3.js Visualization Features:
 [ ] add zoomable circle packing https://www.data-to-viz.com/graph/circularpacking.html or https://observablehq.com/@d3/zoomable-circle-packing
 - [ ] add zoomable treemap https://www.data-to-viz.com/graph/treemap.html
 - [ ] add zoomable sunburst https://www.data-to-viz.com/graph/sunburst.html
 - [ ] add zoomable dendrogram https://www.data-to-viz.com/graph/dendrogram.html
 - [ ] add dual dendrogram https://www.data-to-viz.com/graph/dual-dendrogram.html
     [ ] add tidy tree option https://observablehq.com/@observablehq/plot-tree-tidy
-- [ ] Think through ways of integrating these processes together. [ ]bring chat into dashboard to have all forms of research in one place 
+- [ ] Think through ways of integrating these processes together. [ ]bring chat into dashboard to have all forms of research in one place
 - [ ] Enhanced Authentication Options
 
 ### Low Priority

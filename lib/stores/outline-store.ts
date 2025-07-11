@@ -31,6 +31,7 @@ export interface OutlineState {
   // Actions
   addNode: (node: Omit<OutlineNode, 'order'>) => void;
   addNodes: (nodes: Omit<OutlineNode, 'order'>[]) => void;
+  updateNode: (nodeId: string, updates: Partial<OutlineNode>) => void;
   removeNode: (nodeId: string) => void;
   clearNodes: () => void;
   reorderNodes: (startIndex: number, endIndex: number) => void;
@@ -186,5 +187,12 @@ export const useOutlineStore = create<OutlineState>((set, get) => ({
       selectedNodeIds: [],
       outlineContent: null,
       error: null,
+    })),
+
+  updateNode: (nodeId: string, updates: Partial<OutlineNode>) =>
+    set((state) => ({
+      nodes: state.nodes.map(node =>
+        node.id === nodeId ? { ...node, ...updates } : node
+      )
     })),
 }));

@@ -1,135 +1,62 @@
 # Project Task List - COMPLETED FEATURES
 
-## Backend Setup (Core MVP) ✅
--   [x] Review TASK.md against BRD.md and PRD.md to add any missing steps.
--   [x] Initialize Prisma and define schema for Nodes, Sources, and Conflicts.
--   [x] Create API route `/api/research/nodes` to fetch initial exploration data.
--   [x] **(CRITICAL)** Create API route `/api/research/outline` (POST) that accepts an array of node IDs and a detail level (`low`, `medium`, `high`) and returns dynamically structured outline content.
--   [x] Set up Gemini and OpenAI API integrations.
+## Completed Tasks
 
-## Frontend Development (Core MVP) ✅
+### Backend Setup (Core MVP)
+- [x] Review TASK.md against BRD.md and PRD.md to add any missing steps.
+- [x] Initialize Prisma and define schema for Nodes, Sources, and Conflicts.
+- [x] Create API route `/api/research/nodes` to fetch initial exploration data.
+- [x] Create API route `/api/research/outline` (POST) that accepts an array of node IDs and a detail level (`low`, `medium`, `high`) and returns dynamically structured outline content.
+- [x] Set up Gemini and OpenAI API integrations.
 
-### 1. Layout & Core Components ✅
--   [x] Set up the main page layout: a primary panel for visualization and a sidebar for the outline builder.
--   [x] Implement the visualization canvas area (placeholder for D3.js integration).
--   [x] Create the `Outline Builder` component in the sidebar.
--   [x] Create the `Adjustable Detail Slider` component using Shadcn/UI.
--   [x] Create dedicated long-form text editor interface.
--   [x] Implement basic text formatting (bold, italics, headings) in editor.
+### Frontend Development (Core MVP)
+- [x] Set up the main page layout: a primary panel for visualization and a sidebar for the outline builder.
+- [x] Implement the visualization canvas area (placeholder for D3.js integration).
+- [x] Create the `Outline Builder` component in the sidebar.
+- [x] Create the `Adjustable Detail Slider` component using Shadcn/UI.
+- [x] Create dedicated long-form text editor interface.
+- [x] Implement basic text formatting (bold, italics, headings) in editor.
 
-### 2. State Management & Interactivity ✅
--   [x] Set up client-side state management (Zustand or React Query) for the outline's state (list of nodes, order).
--   [x] Implement drag-and-drop functionality (React DnD) to move nodes from the visualization into the outline.
--   [x] Implement selection functionality (checkbox on nodes) as an alternative to drag-and-drop.
--   [x] Implement drag-and-drop reordering of items *within* the `Outline Builder`.
--   [x] Connect the `Adjustable Detail Slider` state to the API call for the outline content. When the slider moves, re-fetch the outline with the new detail level.
--   [x] Implement tools to indicate comparisons and relationships within the outline.
+### State Management & Interactivity
+- [x] Set up client-side state management (Zustand or React Query) for the outline's state (list of nodes, order).
+- [x] Implement drag-and-drop functionality (React DnD) to move nodes from the visualization into the outline.
+- [x] Implement selection functionality (checkbox on nodes) as an alternative to drag-and-drop.
+- [x] Implement drag-and-drop reordering of items *within* the `Outline Builder`.
+- [x] Connect the `Adjustable Detail Slider` state to the API call for the outline content. When the slider moves, re-fetch the outline with the new detail level.
+- [x] Implement tools to indicate comparisons and relationships within the outline.
 
-### 3. Features ✅
--   [x] Implement the "Clear Outline" button functionality.
-    - Add button to OutlineBuilder component
-    - Connect to store action that resets outline nodes array
-    - Add confirmation dialog to prevent accidental clearing
--   [x] Implement the "Export Outline" feature (initially to Markdown, then PDF/DOCX).
-    - Create utility function to convert outline data to Markdown
-    - Add "Export" button with dropdown for format selection
-    - Implement file download mechanism
+### Features
+- [x] Implement the "Clear Outline" button functionality.
+- [x] Implement the "Export Outline" feature (initially to Markdown, then PDF/DOCX).
 
-## Visualization (Core MVP) ✅
--   [x] Integrate D3.js with React for the main exploration graph.
--   [x] Render nodes fetched from the backend API.
--   [x] Ensure nodes in the visualization are interactive (clickable for details, draggable for outline).
--   [x] Implement basic search and filtering within the knowledge graph.
+### Visualization (Core MVP)
+- [x] Integrate D3.js with React for the main exploration graph.
+- [x] Render nodes fetched from the backend API.
+- [x] Ensure nodes in the visualization are interactive (clickable for details, draggable for outline).
+- [x] Implement basic search and filtering within the knowledge graph.
 
-## Visualization (Post-MVP) ✅
--   [x] Implement ability to import/add research nodes (text, links, images).
--   [x] Implement LLM integration for pedagogical research (10,000-foot view).
--   [x] Implement automatic suggestion and highlighting of connections between subtopics.
--   [x] Implement generation of summaries for selected nodes/clusters.
--   [x] Implement suggestion of related research topics.
--   [x] Implement horizontal exploration across disciplinary lenses.
--   [x] Implement highlighting of scholarly debate, conflicts, and unresolved questions in nodes.
+### AI Writing Assistant (Core MVP)
+- [x] Implement LLM-powered generation of outlines based on user-selected nodes.
+- [x] Implement LLM-powered generation of draft content based on outline/knowledge graph.
+- [x] Implement ability to expand, refine, or rephrase text sections using AI.
 
-## AI Writing Assistant (Core MVP) ✅
--   [x] Implement a back end system prompt engineering section
-    [x] Create a system prompt for the AI to follow when generating content.
-    [x] Create a system prompt for the AI to follow when generating outlines.
--   [x] Implement LLM-powered generation of outlines based on user-selected nodes.
--   [x] Implement LLM-powered generation of draft content based on outline/knowledge graph.
--   [x] Implement ability to expand, refine, or rephrase text sections using AI.
--   [x] Implement Model Context Protocol (MCPs) for guiding LLM output.
--   [x] Implement AI-powered suggestions for improving outline structure and content.
--   [x] Implement AI-powered suggestions for additional nodes to explore based on current outline.
-
-## AI-Powered Dashboard Integration ✅
+### AI-Powered Dashboard Integration
 - [x] Implement functionality to summarize chat content.
 - [x] Use the summary to dynamically generate nodes for the dashboard.
 - [x] Ensure seamless integration with the existing visualization and outline builder.
-- [x] Add API endpoint to process chat summaries and return node data.
-- [x] Test the workflow from chat to dashboard node generation.
 
-## User Authentication & Project Management (Post-MVP) ✅
--   [x] Integrate NextAuth.js with Google and/or GitHub OAuth providers
--   [x] Create login/logout button and modal
--   [x] Update Prisma schema for User and SavedPath models
--   [x] Implement server-side saving and loading
--   [x] Create comprehensive API endpoints for project management
--   [x] Implement user session management and security
--   [x] Add project CRUD operations with proper user isolation
--   [x] Create comprehensive authentication documentation
+### Testing & Quality Assurance
+- [x] Set up basic Jest tests for outline manipulation functions.
+- [x] Test critical user flows (adding nodes, reordering, exporting).
+- [x] Implement basic error handling for API failures.
 
-## Testing & Quality Assurance (Core MVP) ✅
--   [x] Set up basic Jest tests for outline manipulation functions
--   [x] Test critical user flows (adding nodes, reordering, exporting)
--   [x] Implement basic error handling for API failures
--   [x] **DEBUGGING COMPLETED**: Chat-to-dashboard workflow persistence issue
-    - Issue: Generated research nodes not displaying in dashboard after chat workflow
-    - Status: RESOLVED - Enhanced localStorage persistence with timestamps and improved debugging
-    - Fix implemented: Enhanced localStorage persistence with timestamps and improved debugging   
-
-## Testing & Quality Assurance (Post-MVP) ✅
--   [x] Expand test coverage to all components (Jest configuration completed)
--   [x] Implement end-to-end tests with Cypress (basic E2E tests working)
--   [x] Add comprehensive performance testing (performance monitoring implemented)
--   [x] Implement advanced accessibility testing (accessibility utilities and testing implemented)
-
-### API Security ✅
--   [x] Implement rate limiting for all API routes
--   [x] Add request validation middleware using Zod
--   [x] Set up proper CORS configuration
--   [x] Implement API authentication checks
-
-### Performance Optimization ✅
--   [x] Implement virtualization for large node lists
--   [x] Add pagination for API responses with large datasets
--   [x] Optimize D3.js rendering for large graphs
--   [x] Set up performance monitoring
-
-### Accessibility ✅
--   [x] Ensure all interactive elements are keyboard accessible
--   [x] Add proper ARIA attributes to custom components
--   [x] Implement focus management for modal dialogs
--   [x] Test with screen readers
-
-### Error Handling ✅
--   [x] Implement error boundaries for React components
--   [x] Create consistent error states for API failures
--   [x] Add user-friendly error messages
--   [x] Implement toast notifications for system feedback
-
-## DevOps ✅
--   [x] Set up GitHub Actions for CI/CD
--   [x] Implement automated testing in the pipeline
--   [x] Configure deployment to Vercel
--   [x] Set up database migration automation
-
-## Documentation ✅
--   [x] Create API documentation with Swagger/OpenAPI
--   [x] Document component usage with Storybook (component documentation completed)
--   [x] Write developer setup guide
--   [x] Document database schema and relationships
--   [x] Create comprehensive authentication documentation
--   [x] Document security and accessibility features
+### Documentation
+- [x] Create API documentation with Swagger/OpenAPI.
+- [x] Document component usage with Storybook.
+- [x] Write developer setup guide.
+- [x] Document database schema and relationships.
+- [x] Create comprehensive authentication documentation.
+- [x] Document security and accessibility features.
 
 ---
 
