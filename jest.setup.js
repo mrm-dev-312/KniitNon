@@ -3,6 +3,29 @@
  * 
  * This file configures the testing environment and sets up
  * necessary mocks and utilities for Jest tests.
+ * 
+ * Key Features:
+ * - Polyfills for TextEncoder and TextDecoder.
+ * - Mock implementations for Headers, Request, and Response objects.
+ * - Mock Next.js utilities including router, navigation, image, and link components.
+ * - Mock Prisma client for database interactions.
+ * - Mock D3.js for data visualization.
+ * - Mock React DnD for drag-and-drop functionality.
+ * - Mock Zustand stores for state management.
+ * - Mock AI providers for Google Generative AI and OpenAI.
+ * - Mock fetch for API calls.
+ * - Mock localStorage and sessionStorage.
+ * - Mock window.matchMedia, IntersectionObserver, and ResizeObserver.
+ * - Suppression of known console errors.
+ * - Automatic clearing of mocks after each test.
+ * 
+ * Usage:
+ * Import this file in your Jest configuration to ensure consistent test behavior.
+ * Example:
+ * ```
+ * // jest.config.js
+ * setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+ * ```
  */
 
 import '@testing-library/jest-dom';
@@ -12,18 +35,88 @@ import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+// Mock Headers for web APIs
+if (!global.Headers) {
+  global.Headers = class MockHeaders {
+    constructor(init) {
+      this._headers = new Map();
+      if (init) {
+        if (init instanceof Headers || init instanceof MockHeaders) {
+          init.forEach((value, key) => this.set(key, value));
+        } else if (Array.isArray(init)) {
+          init.forEach(([key, value]) => this.set(key, value));
+        } else {
+          Object.entries(init).forEach(([key, value]) => this.set(key, value));
+        }
+      }
+    }
+    
+    get(name) {
+      return this._headers.get(name.toLowerCase());
+    }
+    
+    set(name, value) {
+      this._headers.set(name.toLowerCase(), String(value));
+    }
+    
+    has(name) {
+      return this._headers.has(name.toLowerCase());
+    }
+    
+    delete(name) {
+      this._headers.delete(name.toLowerCase());
+    }
+    
+    forEach(callback, thisArg) {
+      this._headers.forEach((value, key) => callback.call(thisArg, value, key, this));
+    }
+    
+    entries() {
+      return this._headers.entries();
+    }
+    
+    keys() {
+      return this._headers.keys();
+    }
+    
+    values() {
+      return this._headers.values();
+    }
+  };
+}
+
 // Mock Request/Response for Next.js
 if (!global.Request) {
   global.Request = class MockRequest {
     constructor(url, options = {}) {
-      this.url = url;
+      // Define url as a getter to match NextRequest behavior
+      Object.defineProperty(this, 'url', {
+        value: url,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      });
+      
       this.method = options.method || 'GET';
-      this.headers = new Map(Object.entries(options.headers || {}));
+      this.headers = new Headers(options.headers || {});
       this.body = options.body;
+      this._bodyInit = options.body;
     }
     
     async json() {
       return JSON.parse(this.body || '{}');
+    }
+    
+    async text() {
+      return this.body || '';
+    }
+    
+    clone() {
+      return new MockRequest(this.url, {
+        method: this.method,
+        headers: this.headers,
+        body: this.body
+      });
     }
   };
 }
@@ -34,7 +127,8 @@ if (!global.Response) {
       this.body = body;
       this.status = options.status || 200;
       this.statusText = options.statusText || 'OK';
-      this.headers = new Map(Object.entries(options.headers || {}));
+      this.headers = new Headers(options.headers || {});
+      this.ok = this.status >= 200 && this.status < 300;
     }
     
     static json(data, options = {}) {
@@ -44,6 +138,22 @@ if (!global.Response) {
           'Content-Type': 'application/json',
           ...options.headers,
         },
+      });
+    }
+    
+    async json() {
+      return JSON.parse(this.body || '{}');
+    }
+    
+    async text() {
+      return this.body || '';
+    }
+    
+    clone() {
+      return new MockResponse(this.body, {
+        status: this.status,
+        statusText: this.statusText,
+        headers: this.headers
       });
     }
   };
