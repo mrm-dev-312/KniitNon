@@ -50,7 +50,7 @@ All core MVP and Post-MVP features have been successfully implemented:
 - [ ] add zoomable dendrogram https://www.data-to-viz.com/graph/dendrogram.html
 - [ ] add dual dendrogram https://www.data-to-viz.com/graph/dual-dendrogram.html
     [ ] add tidy tree option https://observablehq.com/@observablehq/plot-tree-tidy
-- [ ] Think through ways of integrating these processes together. [ ]bring chat into dashboard to have all forms of research in one place
+- [x] Think through ways of integrating these processes together. [x] bring chat into dashboard to have all forms of research in one place
 - [ ] Enhanced Authentication Options
 
 ### Low Priority
