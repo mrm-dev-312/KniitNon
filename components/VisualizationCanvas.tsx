@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { useOutlineStore } from '@/lib/stores/outline-store';
 import { ItemTypes } from '@/components/providers/DragDropProvider';
@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Plus, RefreshCw, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import D3Visualization, { D3Node, D3Link } from './D3Visualization';
+import MindMapBulletinBoard from './MindMapBulletinBoard';
 import ImportNodeDialog from './ImportNodeDialog';
 import SummaryDialog from './SummaryDialog';
 import ConflictHighlightDialog from './ConflictHighlightDialog';
@@ -111,14 +112,15 @@ const VisualizationCanvas: React.FC = () => {
   const [d3Nodes, setD3Nodes] = useState<D3Node[]>([]);
   const [d3Links, setD3Links] = useState<D3Link[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'d3' | 'traditional'>('d3');
+  const [viewMode, setViewMode] = useState<'d3' | 'mindmap'>('d3');
   const [selectedNodeDetails, setSelectedNodeDetails] = useState<D3Node | null>(null);
   const [showChatDataNotification, setShowChatDataNotification] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   // Sample nodes for demonstration with proper taxonomic hierarchy
-  const sampleNodes: VisualizationNode[] = [
+  const sampleNodes: VisualizationNode[] = useMemo(() => [
     {
       id: 'node-1',
       title: 'Climate Change',
@@ -200,7 +202,7 @@ const VisualizationCanvas: React.FC = () => {
       source: 'Wind Power Association',
       depth: 1 // Second level
     }
-  ];
+  ], []);
 
   // Update dimensions on container resize
   useEffect(() => {
@@ -274,7 +276,7 @@ const VisualizationCanvas: React.FC = () => {
     setD3Links(d3LinksData);
   }, [nodes]);
 
-  const fetchNodes = async () => {
+  const fetchNodes = useCallback(async () => {
     console.log('=== VisualizationCanvas fetchNodes called ===');
     setIsLoading(true);
     try {
@@ -376,11 +378,11 @@ const VisualizationCanvas: React.FC = () => {
       console.log('=== fetchNodes completed ===');
       setIsLoading(false);
     }
-  };
+  }, [sampleNodes]);
 
   useEffect(() => {
     fetchNodes();
-  }, []);
+  }, [fetchNodes]);
 
   // Refetch nodes when detail level changes
   useEffect(() => {
@@ -390,7 +392,7 @@ const VisualizationCanvas: React.FC = () => {
       console.log('🔄 Detail level changed to:', detailLevel, '- refetching nodes');
       fetchNodes();
     }
-  }, [detailLevel]);
+  }, [detailLevel, fetchNodes, nodes.length]);
 
   const filteredNodes = nodes.filter(node =>
     node.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -530,7 +532,7 @@ const VisualizationCanvas: React.FC = () => {
   const resetZoom = () => {
     // This would trigger a reset in the D3 visualization
     // For now, we'll just refresh the component
-    setViewMode(viewMode === 'd3' ? 'traditional' : 'd3');
+    setViewMode(viewMode === 'd3' ? 'mindmap' : 'd3');
     setTimeout(() => setViewMode(viewMode), 100);
   };
 
@@ -679,11 +681,11 @@ const VisualizationCanvas: React.FC = () => {
         </Button>
 
         <Button
-          variant={viewMode === 'traditional' ? 'default' : 'outline'}
+          variant={viewMode === 'mindmap' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setViewMode('traditional')}
+          onClick={() => setViewMode('mindmap')}
         >
-          Traditional
+          Mind Map
         </Button>
         
         <Button
@@ -758,48 +760,47 @@ const VisualizationCanvas: React.FC = () => {
             )}
           </>
         ) : (
-          <>
-            {filteredNodes.map((node) => (
-              <DraggableNode
-                key={node.id}
-                node={{
-                  id: node.id,
-                  title: node.title,
-                  content: node.content,
-                  type: node.type,
-                  source: node.source,
-                  x: Math.random() * (dimensions.width - 200) + 100,
-                  y: Math.random() * (dimensions.height - 200) + 100,
-                }}
-                isSelected={selectedNodeIds.includes(node.id)}
-                onToggleSelection={toggleNodeSelection}
-              />
-            ))}
-            
-            {filteredNodes.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center text-center">
-                <div>
-                  <p className="text-muted-foreground mb-2">No nodes found</p>
-                  <Button variant="outline" onClick={fetchNodes}>
-                    Load Research Data
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
+          <MindMapBulletinBoard
+            nodes={filteredNodes}
+            selectedNodeIds={selectedNodeIds}
+            onNodeClick={(nodeId) => {
+              const node = filteredNodes.find(n => n.id === nodeId);
+              if (node) handleNodeClick(node);
+            }}
+            onNodeDoubleClick={(nodeId) => {
+              const node = filteredNodes.find(n => n.id === nodeId);
+              if (node) handleNodeDoubleClick(node);
+            }}
+            width={dimensions.width}
+            height={dimensions.height}
+          />
         )}
         
         {/* Instructions */}
-        <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm p-3 rounded-lg border text-sm">
-          <p className="font-medium mb-1">How to use:</p>
-          <ul className="space-y-1 text-muted-foreground">
-            <li>• {viewMode === 'd3' ? 'Click nodes to select, double-click for details' : 'Check boxes to select nodes'}</li>
-            <li>• {viewMode === 'd3' ? 'Shift+click or right-click topics/subtopics to drill deeper' : 'Drag nodes to the outline builder'}</li>
-            <li>• Type a topic and press Enter or click Generate to create research nodes</li>
-            <li>• Use search to filter existing nodes</li>
-            <li>• {viewMode === 'd3' ? 'Zoom and pan the graph as needed' : 'Switch to D3 view for interactive graph'}</li>
-          </ul>
-        </div>
+        {showInstructions && (
+          <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm p-3 rounded-lg border text-sm">
+            <div className="flex items-center justify-between mb-1">
+              <p className="font-medium">How to use:</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 hover:bg-muted"
+                onClick={() => setShowInstructions(false)}
+              >
+                ×
+              </Button>
+            </div>
+            <ul className="space-y-1 text-muted-foreground">
+              <li>• {viewMode === 'd3' ? 'Click nodes to select, double-click for details' : 'Click and drag nodes to position them on the mind map'}</li>
+              <li>• {viewMode === 'd3' ? 'Shift+click or right-click topics/subtopics to drill deeper' : 'Click a node then click another to draw connections'}</li>
+              {viewMode === 'd3' && <li>• <strong>Pin nodes:</strong> Hold Ctrl or Alt while dragging to pin/unpin nodes in place</li>}
+              {viewMode === 'mindmap' && <li>• <strong>Pin nodes:</strong> Right-click nodes to pin/unpin them in place</li>}
+              <li>• Type a topic and press Enter or click Generate to create research nodes</li>
+              <li>• Use search to filter existing nodes</li>
+              <li>• {viewMode === 'd3' ? 'Zoom and pan the graph as needed' : 'Click Mind Map controls to add/delete nodes'}</li>
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Node Details Modal */}

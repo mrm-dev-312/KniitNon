@@ -8,6 +8,12 @@ describe('useOutlineStore', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (global.fetch as jest.Mock).mockReset();
+    
+    // Reset store state before each test
+    const { result } = renderHook(() => useOutlineStore());
+    act(() => {
+      result.current.clearNodes();
+    });
   });
 
   it('initializes with empty state', () => {

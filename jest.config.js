@@ -19,6 +19,21 @@ const customJestConfig = {
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   // Handle file imports that Jest can't handle
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  // Enable ES modules support
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  // Transform ES modules that Jest can't handle
+  transformIgnorePatterns: [
+    'node_modules/(?!(jose|openid-client|@next-auth|next-auth|oauth4webapi|oidc-token-hash|uuid)/)',
+  ],
+  // Force transformation of specific ES modules
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+  },
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

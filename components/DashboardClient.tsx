@@ -8,11 +8,12 @@ import AdjustableDetailSlider from '@/components/AdjustableDetailSlider';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
 import AdvancedAIAssistant from '@/components/AdvancedAIAssistant';
 import StrategicNodeGenerator from '@/components/StrategicNodeGenerator';
+import { Chat } from '@/components/ai/chat';
 import { AuthButton } from '@/components/AuthButton';
 import { ProjectManager } from '@/components/ProjectManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DetailLevel } from '@/components/AdjustableDetailSlider';
-import { Zap, FileText, Settings } from 'lucide-react';
+import { Zap, FileText, Settings, MessageCircle } from 'lucide-react';
 
 export default function DashboardClient() {
   const [detailLevel, setDetailLevel] = useState<DetailLevel>('medium');
@@ -100,7 +101,7 @@ export default function DashboardClient() {
         {/* Tabbed Interface */}
         <div className="flex-1 p-4">
           <Tabs defaultValue="outline" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="outline" className="flex items-center gap-1">
                 <FileText className="h-3 w-3" />
                 Outline
@@ -108,6 +109,10 @@ export default function DashboardClient() {
               <TabsTrigger value="ai-assistant" className="flex items-center gap-1">
                 <Zap className="h-3 w-3" />
                 AI Assistant
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="flex items-center gap-1">
+                <MessageCircle className="h-3 w-3" />
+                Chat
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-1">
                 <Settings className="h-3 w-3" />
@@ -162,12 +167,15 @@ export default function DashboardClient() {
 
                 {/* AI Features Tabs */}
                 <Tabs defaultValue="strategic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsList className="grid w-full grid-cols-3 mb-4">
                     <TabsTrigger value="strategic" className="text-xs">
                       Strategic Nodes
                     </TabsTrigger>
                     <TabsTrigger value="advanced" className="text-xs">
                       Advanced Analysis
+                    </TabsTrigger>
+                    <TabsTrigger value="chat" className="text-xs">
+                      Chat Assistant
                     </TabsTrigger>
                   </TabsList>
 
@@ -186,7 +194,134 @@ export default function DashboardClient() {
                       onSuggestionImplement={handleSuggestionImplement}
                     />
                   </TabsContent>
+
+                  <TabsContent value="chat">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Research Chat</label>
+                        <p className="text-xs text-muted-foreground">
+                          Chat with AI to generate research nodes and insights
+                        </p>
+                      </div>
+                      <div className="h-[300px] border rounded-lg overflow-hidden">
+                        <Chat />
+                      </div>
+                      <button
+                        className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                        onClick={(event) => {
+                          // Extract nodes from AI responses in the chat
+                          const chatContainer = document.querySelector('[data-role="assistant"]:last-child');
+                          const lastAiResponse = chatContainer?.textContent?.replace('AI: ', '') || '';
+                          
+                          if (lastAiResponse && lastAiResponse.trim()) {
+                            // Parse AI response for potential node content
+                            const sentences = lastAiResponse.split('.').filter(s => s.trim().length > 0);
+                            const firstSentence = sentences[0]?.trim() || 'AI Generated Insight';
+                            
+                            const newNode = {
+                              id: `ai-response-${Date.now()}`,
+                              title: firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence,
+                              content: lastAiResponse.trim(),
+                              type: 'topic' as const,
+                              connections: [],
+                              addedAt: new Date().toISOString(),
+                              source: 'AI Chat Response'
+                            };
+                            setCurrentNodes(prev => [...prev, newNode]);
+                            console.log('Generated node from AI response:', newNode);
+                            
+                            // Trigger visualization update
+                            window.dispatchEvent(new CustomEvent('nodeAdded', { detail: newNode }));
+                            
+                            // Show success feedback
+                            const button = event.target as HTMLButtonElement;
+                            const originalText = button.textContent;
+                            button.textContent = 'Node Generated!';
+                            button.className = button.className.replace('bg-primary', 'bg-green-600');
+                            setTimeout(() => {
+                              button.textContent = originalText;
+                              button.className = button.className.replace('bg-green-600', 'bg-primary');
+                            }, 2000);
+                          } else {
+                            console.log('No AI response found to generate node from');
+                            // Show error feedback
+                            const button = event.target as HTMLButtonElement;
+                            const originalText = button.textContent;
+                            button.textContent = 'No AI response found';
+                            button.className = button.className.replace('bg-primary', 'bg-red-600');
+                            setTimeout(() => {
+                              button.textContent = originalText;
+                              button.className = button.className.replace('bg-red-600', 'bg-primary');
+                            }, 2000);
+                          }
+                        }}
+                      >
+                        Generate Node from AI Response
+                      </button>
+                    </div>
+                  </TabsContent>
                 </Tabs>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="chat" className="flex-1 overflow-hidden">
+              <div className="h-full flex flex-col">
+                <h3 className="font-semibold text-sm mb-3 flex-shrink-0">Research Chat</h3>
+                <div className="flex-1 overflow-hidden border rounded-lg min-h-0">
+                  <Chat />
+                </div>
+                <button
+                  className="mt-3 w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex-shrink-0"
+                  onClick={(event) => {
+                    // Extract nodes from AI responses in the chat
+                    const chatContainer = document.querySelector('[data-role="assistant"]:last-child');
+                    const lastAiResponse = chatContainer?.textContent?.replace('AI: ', '') || '';
+                    
+                    if (lastAiResponse && lastAiResponse.trim()) {
+                      // Parse AI response for potential node content
+                      const sentences = lastAiResponse.split('.').filter(s => s.trim().length > 0);
+                      const firstSentence = sentences[0]?.trim() || 'AI Generated Insight';
+                      
+                      const newNode = {
+                        id: `ai-response-${Date.now()}`,
+                        title: firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence,
+                        content: lastAiResponse.trim(),
+                        type: 'topic' as const,
+                        connections: [],
+                        addedAt: new Date().toISOString(),
+                        source: 'AI Chat Response'
+                      };
+                      setCurrentNodes(prev => [...prev, newNode]);
+                      console.log('Generated node from AI response:', newNode);
+                      
+                      // Trigger visualization update by dispatching a custom event
+                      window.dispatchEvent(new CustomEvent('nodeAdded', { detail: newNode }));
+                      
+                      // Show success feedback
+                      const button = event.target as HTMLButtonElement;
+                      const originalText = button.textContent;
+                      button.textContent = 'Node Generated!';
+                      button.className = button.className.replace('bg-primary', 'bg-green-600');
+                      setTimeout(() => {
+                        button.textContent = originalText;
+                        button.className = button.className.replace('bg-green-600', 'bg-primary');
+                      }, 2000);
+                    } else {
+                      console.log('No AI response found to generate node from');
+                      // Show error feedback
+                      const button = event.target as HTMLButtonElement;
+                      const originalText = button.textContent;
+                      button.textContent = 'No AI response found';
+                      button.className = button.className.replace('bg-primary', 'bg-red-600');
+                      setTimeout(() => {
+                        button.textContent = originalText;
+                        button.className = button.className.replace('bg-red-600', 'bg-primary');
+                      }, 2000);
+                    }
+                  }}
+                >
+                  Generate Node from AI Response
+                </button>
               </div>
             </TabsContent>
 
