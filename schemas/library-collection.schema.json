@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "library-collection.schema.json",
+  "title": "LibraryCollection",
+  "type": "object",
+  "required": ["sources"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "source-record.schema.json"},
+      "minItems": 1
+    },
+    "generatedAt": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "inclusion-rules.schema.json",
+  "title": "InclusionExclusionRules",
+  "type": "object",
+  "required": ["inclusion_rules", "exclusion_rules"],
+  "properties": {
+    "inclusion_rules": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 3 },
+      "minItems": 1
+    },
+    "exclusion_rules": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 3 },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "topic-scope.schema.json",
+  "title": "TopicScope",
+  "type": "object",
+  "required": ["topic_one_liner", "venue_style"],
+  "properties": {
+    "topic_one_liner": { "type": "string", "minLength": 8 },
+    "venue_style": { "type": "string", "enum": ["APA", "MLA", "IEEE"] },
+    "refined_questions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 8 },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "inclusion_rules": { "type": "array", "items": {"type": "string"}, "minItems": 1 },
+    "exclusion_rules": { "type": "array", "items": {"type": "string"}, "minItems": 1 }
+  },
+  "additionalProperties": false
+}

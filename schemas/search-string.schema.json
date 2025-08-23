@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "search-string.schema.json",
+  "title": "SearchString",
+  "type": "object",
+  "required": ["text"],
+  "properties": {
+    "id": {"type": "string"},
+    "text": {"type": "string", "minLength": 3},
+    "rationale": {"type": "string"},
+    "enginesRun": {"type": "array", "items": {"type": "string"}},
+    "lastRunAt": {"type": ["string", "null"], "format": "date-time"},
+    "stageGenerated": {"type": ["integer", "null"], "enum": [0,1,null]}
+  },
+  "additionalProperties": false
+}

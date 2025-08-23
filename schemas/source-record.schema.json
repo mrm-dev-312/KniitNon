@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "source-record.schema.json",
+  "title": "SourceRecord",
+  "type": "object",
+  "required": ["title", "priority"],
+  "properties": {
+    "id": {"type": "string"},
+  "doi": {"type": ["string", "null"], "pattern": "^10\\.\\S+"},
+    "title": {"type": "string", "minLength": 5},
+    "authors": {"type": "array", "items": {"type": "string"}},
+    "venue": {"type": ["string", "null"]},
+    "year": {"type": ["integer", "null"], "minimum": 1900, "maximum": 2100},
+    "url": {"type": ["string", "null"], "format": "uri"},
+    "pdf_available": {"type": "boolean", "default": false},
+    "is_seminal": {"type": "boolean", "default": false},
+    "priority": {"type": "string", "enum": ["A", "B", "C"]},
+    "addedAt": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "additionalProperties": false
+}
