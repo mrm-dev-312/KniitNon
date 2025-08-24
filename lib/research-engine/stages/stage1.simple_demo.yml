@@ -1,0 +1,20 @@
+# Stage 1 Simple Demo - Basic corpus building
+stage: 1
+name: stage1.simple_demo
+description: Simple demo configuration for Stage 1 - basic source collection with minimal requirements
+
+# Simple prompt chain for corpus building
+prompts:
+  - demo_collect_sources
+  - demo_score_sources
+
+# Basic metrics
+metrics:
+  source_artifacts: 'artifacts.length'
+
+# Simple gate rules for demo
+gate:
+  rules:
+    - expr: 'artifact_count >= 0'  # Always passes for demo
+  auto_pass: true
+  requires_user_ack: false

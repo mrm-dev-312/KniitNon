@@ -1,0 +1,81 @@
+# Stage 0 Prompt Chain: Select Venue Style
+name: select_venue
+version: 1
+stage: 0
+description: Select appropriate citation style based on research topic and academic discipline.
+
+# Required inputs from context
+inputs:
+  - topic_one_liner
+  - questions
+
+# System prompt for venue selection
+system: >
+  You are an academic publication expert who determines appropriate citation styles.
+  
+  Based on the research topic and questions, select the most appropriate citation style:
+  - APA: Psychology, Education, Social Sciences, Health Sciences
+  - MLA: Literature, Humanities, Arts, Cultural Studies  
+  - IEEE: Engineering, Computer Science, Technology
+  
+  Consider the disciplinary norms and typical publication venues for this research area.
+  
+  Return ONLY valid JSON with the venue_style field. No explanation outside JSON.
+
+# User prompt template
+user: >
+  Select the appropriate citation style for this research:
+  
+  Topic: "{{topic_one_liner}}"
+  
+  Research Questions:
+  {{#each questions}}
+  - {{this}}
+  {{/each}}
+  
+  Choose from: APA, MLA, or IEEE based on the academic discipline.
+
+# Expected output schema (partial topic-scope schema)
+output_schema: ../schemas/topic-scope.schema.json
+
+# Retry configuration
+retry: 2
+timeout: 15
+
+# Model parameters
+temperature: 0.0  # Deterministic choice
+max_tokens: 60
+
+# Examples for few-shot learning
+examples:
+  - input:
+      topic_one_liner: "Machine learning applications for diagnostic accuracy improvement in medical imaging interpretation"
+      questions:
+        - "What machine learning techniques are currently used for medical imaging diagnosis?"
+        - "Which medical imaging modalities show the greatest diagnostic accuracy gains?"
+        - "What are the main barriers to clinical adoption of AI-enhanced medical imaging?"
+    output:
+      venue_style: "IEEE"
+  
+  - input:
+      topic_one_liner: "Social media usage patterns and their correlation with anxiety and depression symptoms in adolescents"
+      questions:
+        - "What social media usage patterns are most commonly observed among adolescents?"
+        - "What is the strength and direction of correlation between social media behaviors and mental health?"
+        - "What mediating factors influence the relationship between social media use and mental health?"
+    output:
+      venue_style: "APA"
+
+  - input:
+      topic_one_liner: "Narrative techniques in contemporary climate fiction and their influence on environmental consciousness"
+      questions:
+        - "What narrative strategies do contemporary climate fiction authors employ?"
+        - "How do these techniques affect reader engagement with environmental issues?"
+        - "What gaps exist in literary analysis of climate fiction's persuasive power?"
+    output:
+      venue_style: "MLA"
+
+# Validation rules
+validation:
+  venue_style_valid_enum: ["APA", "MLA", "IEEE"]
+  venue_matches_discipline: true

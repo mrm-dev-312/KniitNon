@@ -1,0 +1,35 @@
+# Stage 1 Corpus Build configuration
+stage: 1
+name: stage1.corpus_build
+description: Execute searches, collect sources, and build research corpus with priority scoring and seminal source identification.
+
+# Prompt chain for corpus building
+prompts:
+  - execute_database_searches
+  - collect_source_records  
+  - score_source_priority
+  - identify_seminal_sources
+  - validate_corpus_quality
+
+# Metrics computation for corpus evaluation
+metrics:
+  source_count: 'count(artifacts, {"schema_id": "stage1.source_record"})'
+  priority_A_count: 'priority_count(artifacts, "A")'
+  priority_B_count: 'priority_count(artifacts, "B")' 
+  priority_C_count: 'priority_count(artifacts, "C")'
+  seminal_count: 'seminal_count(artifacts)'
+  priority_A_percentage: 'percentage(priority_A_count, source_count)'
+
+# Gate rules: ensure sufficient high-quality corpus
+gate:
+  rules:
+    # Minimum corpus size
+    - expr: '{ ">=": [ {"var": "metrics.source_count"}, 25 ] }'
+    # Sufficient high-priority sources
+    - expr: '{ ">=": [ {"var": "metrics.priority_A_count"}, 5 ] }'
+    # Adequate seminal sources
+    - expr: '{ ">=": [ {"var": "metrics.seminal_count"}, 2 ] }'
+    # Quality ratio check
+    - expr: '{ ">=": [ {"var": "metrics.priority_A_percentage"}, 15 ] }'
+  auto_pass: false
+  requires_user_ack: true

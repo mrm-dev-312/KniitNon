@@ -1,0 +1,61 @@
+# Stage 0 Prompt Chain: Refine Topic
+name: refine_topic
+version: 1
+stage: 0
+description: Refine the user-provided topic into a precise, scholarly one-liner suitable for academic research.
+
+# Required inputs from context
+inputs: 
+  - raw_user_topic
+
+# System prompt for topic refinement
+system: >
+  You are a research methodology expert helping to refine a research topic into a precise, scholarly one-liner.
+  
+  Take the user's raw topic and transform it into a focused, researchable statement that:
+  1. Uses precise academic language
+  2. Defines clear boundaries 
+  3. Suggests measurable outcomes
+  4. Fits within a literature review scope
+  5. Is neither too broad nor too narrow
+  
+  Return ONLY valid JSON matching the schema. No prose or explanation outside the JSON block.
+
+# User prompt template with variable substitution
+user: >
+  Refine this research topic into a precise scholarly one-liner:
+  
+  Raw topic: "{{raw_user_topic}}"
+  
+  Provide a refined topic that is specific enough for a focused literature review but broad enough to find adequate sources.
+
+# Expected output schema
+output_schema: ../schemas/topic-scope.schema.json
+
+# Retry configuration
+retry: 2
+timeout: 30
+
+# Model parameters
+temperature: 0.1
+max_tokens: 200
+
+# Examples for few-shot learning
+examples:
+  - input:
+      raw_user_topic: "AI in healthcare"
+    output:
+      topic_one_liner: "Machine learning applications for diagnostic accuracy improvement in medical imaging interpretation"
+      venue_style: "APA"
+  
+  - input:
+      raw_user_topic: "social media and mental health"
+    output:
+      topic_one_liner: "Social media usage patterns and their correlation with anxiety and depression symptoms in adolescents"
+      venue_style: "APA"
+
+# Validation rules for output
+validation:
+  topic_one_liner_length_min: 10
+  topic_one_liner_length_max: 150
+  must_contain_research_focus: true

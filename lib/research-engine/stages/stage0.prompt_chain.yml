@@ -1,0 +1,45 @@
+# Stage 0 Exploration & Scope - Prompt Chain Version
+stage: 0
+name: stage0.prompt_chain
+description: Initial exploration stage using structured prompt chains for topic refinement, question generation, venue selection, and inclusion/exclusion criteria definition.
+
+# Sequential prompt chain execution
+prompts:
+  - refine_topic
+  - generate_questions  
+  - select_venue
+  - define_inclusion_exclusion
+
+# Metrics computation for gate evaluation
+metrics:
+  topic_scope_artifacts: 'count(artifacts, {"type": "topic_scope"})'
+  research_questions_artifacts: 'count(artifacts, {"type": "research_questions"})'
+  inclusion_rules_artifacts: 'count(artifacts, {"type": "inclusion_rules"})'
+  refined_questions_count: 'count_array_items(artifacts, "questions")'
+  venue_style_selected: 'count(artifacts, {"venue_style": {"$exists": true}})'
+
+# Gate rules: ensure complete Stage 0 deliverables
+gate:
+  rules:
+    # Must have refined topic scope
+    - expr: '{ ">=": [ {"var": "metrics.topic_scope_artifacts"}, 1 ] }'
+    # Must have exactly 3 research questions
+    - expr: '{ ">=": [ {"var": "metrics.refined_questions_count"}, 3 ] }'
+    # Must have venue style selected
+    - expr: '{ ">=": [ {"var": "metrics.venue_style_selected"}, 1 ] }'
+    # Must have inclusion/exclusion rules defined
+    - expr: '{ ">=": [ {"var": "metrics.inclusion_rules_artifacts"}, 1 ] }'
+  auto_pass: false
+  requires_user_ack: true
+
+# Export configuration for early deliverable
+export:
+  name: "Stage 0 Scoping Memo"
+  format: ["markdown", "json"]
+  template: "stage0_scoping_memo"
+  
+# Stage execution settings
+execution:
+  timeout_per_prompt: 60
+  max_retries: 2
+  parallel_execution: false  # Sequential execution required

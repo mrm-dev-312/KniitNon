@@ -1,0 +1,111 @@
+# Stage 0 Prompt Chain: Define Inclusion/Exclusion Rules
+name: define_inclusion_exclusion
+version: 1
+stage: 0
+description: Define clear inclusion and exclusion criteria for systematic literature search.
+
+# Required inputs from context
+inputs:
+  - topic_one_liner
+  - questions
+  - venue_style
+
+# System prompt for criteria definition
+system: >
+  You are a systematic review expert defining inclusion and exclusion criteria.
+  
+  Based on the research topic and questions, create specific, measurable criteria that will:
+  
+  INCLUSION RULES should specify:
+  - Publication years (e.g., "Published 2015-2025")
+  - Study types (e.g., "Empirical studies with quantitative data")
+  - Population/domain (e.g., "Studies on adolescents aged 13-18")
+  - Language (e.g., "English language publications")
+  - Peer-reviewed requirement
+  
+  EXCLUSION RULES should eliminate:
+  - Irrelevant study types (e.g., "Opinion pieces without data")
+  - Out-of-scope populations (e.g., "Studies on children under 13")
+  - Low-quality sources (e.g., "Non-peer-reviewed publications")
+  - Redundant content (e.g., "Duplicate studies")
+  
+  Make rules specific, actionable, and complementary (no overlap).
+  Return ONLY valid JSON matching the schema.
+
+# User prompt template
+user: >
+  Create inclusion and exclusion criteria for this systematic literature review:
+  
+  Topic: "{{topic_one_liner}}"
+  
+  Research Questions:
+  {{#each questions}}
+  - {{this}}
+  {{/each}}
+  
+  Citation Style: {{venue_style}}
+  
+  Provide specific, measurable criteria that will help identify relevant high-quality sources while excluding irrelevant or low-quality materials.
+
+# Expected output schema
+output_schema: ../schemas/inclusion-rules.schema.json
+
+# Retry configuration
+retry: 2
+timeout: 45
+
+# Model parameters
+temperature: 0.1
+max_tokens: 400
+
+# Examples for few-shot learning
+examples:
+  - input:
+      topic_one_liner: "Machine learning applications for diagnostic accuracy improvement in medical imaging interpretation"
+      questions:
+        - "What machine learning techniques are currently used for medical imaging diagnosis?"
+        - "Which medical imaging modalities show the greatest diagnostic accuracy gains?"
+        - "What are the main barriers to clinical adoption of AI-enhanced medical imaging?"
+      venue_style: "IEEE"
+    output:
+      inclusion_rules:
+        - "Peer-reviewed journal articles and conference proceedings published 2018-2025"
+        - "Studies reporting quantitative diagnostic accuracy metrics (sensitivity, specificity, AUC)"
+        - "Research on medical imaging modalities (CT, MRI, X-ray, ultrasound, etc.)"
+        - "English language publications"
+        - "Studies using machine learning or deep learning algorithms for medical diagnosis"
+      exclusion_rules:
+        - "Review articles without original data analysis"
+        - "Studies on non-medical imaging applications"
+        - "Conference abstracts or posters without full papers"
+        - "Studies without diagnostic accuracy validation"
+        - "Pre-2018 publications unless seminal foundational work"
+  
+  - input:
+      topic_one_liner: "Social media usage patterns and their correlation with anxiety and depression symptoms in adolescents"
+      questions:
+        - "What social media usage patterns are most commonly observed among adolescents?"
+        - "What is the strength and direction of correlation between social media behaviors and mental health?"
+        - "What mediating factors influence the relationship between social media use and mental health?"
+      venue_style: "APA"
+    output:
+      inclusion_rules:
+        - "Peer-reviewed empirical studies published 2015-2025"
+        - "Studies with adolescent participants (ages 13-19)"
+        - "Research measuring both social media use and mental health outcomes"
+        - "Quantitative studies with statistical correlation analysis"
+        - "English language publications in psychology and health journals"
+      exclusion_rules:
+        - "Studies on children under 13 or adults over 19"
+        - "Theoretical papers without empirical data"
+        - "Case studies or qualitative-only research"
+        - "Studies without validated mental health measures"
+        - "Conference presentations without peer review"
+
+# Validation rules
+validation:
+  minimum_inclusion_rules: 3
+  minimum_exclusion_rules: 3
+  rules_are_specific: true
+  no_contradictory_rules: true
+  includes_time_bounds: true

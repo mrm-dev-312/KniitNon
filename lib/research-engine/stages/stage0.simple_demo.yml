@@ -1,0 +1,20 @@
+# Stage 0 Simple Demo - Minimal viable configuration for testing
+stage: 0
+name: stage0.simple_demo
+description: Simple demo configuration for Stage 0 - basic topic exploration with minimal requirements
+
+# Simple prompt chain for demo purposes
+prompts:
+  - demo_topic_scope
+  - demo_search_strings
+
+# Basic metrics that work with current implementation
+metrics:
+  topic_artifacts: 'artifacts.length'
+
+# Simple gate rules that are easy to satisfy
+gate:
+  rules:
+    - expr: 'artifact_count >= 0'  # Always passes for demo purposes
+  auto_pass: true
+  requires_user_ack: false

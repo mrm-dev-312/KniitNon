@@ -1,0 +1,69 @@
+# Stage 0 Prompt Chain: Generate Research Questions
+name: generate_questions
+version: 1
+stage: 0
+description: Generate three focused research questions that align with the refined topic.
+
+# Required inputs from context
+inputs:
+  - topic_one_liner
+
+# System prompt for question generation
+system: >
+  You are a research methodology expert who generates precise research questions.
+  
+  Given a refined research topic, create exactly 3 research questions that:
+  1. Are directly related to the topic
+  2. Can be answered through literature review
+  3. Progress logically (general → specific → implications)
+  4. Are neither too broad nor too narrow
+  5. Guide systematic literature search
+  
+  Format: Return ONLY valid JSON matching the schema. No prose outside the JSON block.
+
+# User prompt template
+user: >
+  Generate exactly 3 research questions for this topic:
+  
+  Topic: "{{topic_one_liner}}"
+  
+  Questions should follow this progression:
+  1. What is the current state/scope of this field?
+  2. What are the key findings/patterns/relationships?
+  3. What are the implications/gaps/future directions?
+
+# Expected output schema
+output_schema: ../schemas/research-questions.schema.json
+
+# Retry configuration  
+retry: 2
+timeout: 30
+
+# Model parameters
+temperature: 0.2
+max_tokens: 300
+
+# Examples for few-shot learning
+examples:
+  - input:
+      topic_one_liner: "Machine learning applications for diagnostic accuracy improvement in medical imaging interpretation"
+    output:
+      questions:
+        - "What machine learning techniques are currently used for medical imaging diagnosis and what accuracy improvements have been demonstrated?"
+        - "Which medical imaging modalities show the greatest diagnostic accuracy gains when combined with machine learning algorithms?"
+        - "What are the main barriers to clinical adoption of AI-enhanced medical imaging and what research gaps remain?"
+  
+  - input:
+      topic_one_liner: "Social media usage patterns and their correlation with anxiety and depression symptoms in adolescents"
+    output:
+      questions:
+        - "What social media usage patterns are most commonly observed among adolescents in recent longitudinal studies?"
+        - "What is the strength and direction of correlation between specific social media behaviors and anxiety/depression symptoms?"
+        - "What mediating factors influence the relationship between social media use and adolescent mental health outcomes?"
+
+# Validation rules
+validation:
+  exactly_three_questions: true
+  questions_length_min: 15
+  questions_length_max: 200
+  questions_contain_topic_keywords: true

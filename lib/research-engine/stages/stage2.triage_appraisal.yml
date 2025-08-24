@@ -1,0 +1,31 @@
+# Stage 2 Triage & Appraisal configuration  
+stage: 2
+name: stage2.triage_appraisal
+description: Detailed appraisal of sources, quality assessment, and methodological evaluation.
+
+# Prompt chain for source appraisal
+prompts:
+  - detailed_source_analysis
+  - methodological_assessment
+  - bias_detection_analysis
+  - relevance_scoring
+  - evidence_quality_rating
+
+# Metrics for appraisal evaluation
+metrics:
+  appraised_source_count: 'count(artifacts, {"schema_id": "stage2.source_appraisal"})'
+  high_quality_count: 'count(artifacts, {"quality_rating": "high"})'
+  methodologically_sound_count: 'count(artifacts, {"methodological_soundness": "sound"})'
+  bias_free_count: 'count(artifacts, {"bias_detected": false})'
+  quality_percentage: 'percentage(high_quality_count, appraised_source_count)'
+
+# Gate rules: ensure thorough appraisal
+gate:
+  rules:
+    # All priority A sources must be appraised  
+    - expr: '{ ">=": [ {"var": "metrics.appraised_source_count"}, {"var": "metrics.priority_A_count"} ] }'
+    # Minimum quality threshold
+    - expr: '{ ">=": [ {"var": "metrics.quality_percentage"}, 60 ] }'
+    # Methodological soundness check
+    - expr: '{ ">=": [ {"var": "metrics.methodologically_sound_count"}, 3 ] }'
+  auto_pass: false
