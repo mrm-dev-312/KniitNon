@@ -197,8 +197,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
         <CardContent className="space-y-4">
           {/* Topic Input */}
           <div>
-            <label className="block text-sm font-medium mb-1">Research Topic *</label>
+            <label htmlFor="research-topic" className="block text-sm font-medium mb-1">Research Topic *</label>
             <Input
+              id="research-topic"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g., Artificial Intelligence in Healthcare, Climate Change Mitigation..."
@@ -208,8 +209,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
 
           {/* Research Context */}
           <div>
-            <label className="block text-sm font-medium mb-1">Research Context (Optional)</label>
+            <label htmlFor="research-context" className="block text-sm font-medium mb-1">Research Context (Optional)</label>
             <Textarea
+              id="research-context"
               value={researchContext}
               onChange={(e) => setResearchContext(e.target.value)}
               placeholder="Provide additional context, specific angles, or constraints for your research..."
@@ -220,8 +222,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
           {/* Configuration Row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Academic Level</label>
+              <label htmlFor="academic-level" className="block text-sm font-medium mb-1">Academic Level</label>
               <select
+                id="academic-level"
                 value={academicLevel}
                 onChange={(e) => setAcademicLevel(e.target.value as any)}
                 className="w-full border rounded px-3 py-2 text-sm"
@@ -233,8 +236,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Strategy</label>
+              <label htmlFor="strategy" className="block text-sm font-medium mb-1">Strategy</label>
               <select
+                id="strategy"
                 value={generationStrategy}
                 onChange={(e) => setGenerationStrategy(e.target.value as any)}
                 className="w-full border rounded px-3 py-2 text-sm"
@@ -250,8 +254,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
           {/* Focus Areas */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Focus Areas (comma-separated)</label>
+              <label htmlFor="focus-areas" className="block text-sm font-medium mb-1">Focus Areas (comma-separated)</label>
               <Input
+                id="focus-areas"
                 value={focusAreas}
                 onChange={(e) => setFocusAreas(e.target.value)}
                 placeholder="ethics, applications, methodology..."
@@ -259,8 +264,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Exclude Areas (comma-separated)</label>
+              <label htmlFor="exclude-areas" className="block text-sm font-medium mb-1">Exclude Areas (comma-separated)</label>
               <Input
+                id="exclude-areas"
                 value={excludeAreas}
                 onChange={(e) => setExcludeAreas(e.target.value)}
                 placeholder="technical details, implementation..."
@@ -270,8 +276,9 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
 
           {/* Max Depth */}
           <div>
-            <label className="block text-sm font-medium mb-1">Maximum Depth: {maxDepth}</label>
+            <label htmlFor="max-depth" className="block text-sm font-medium mb-1">Maximum Depth: {maxDepth}</label>
             <input
+              id="max-depth"
               type="range"
               min="1"
               max="4"
@@ -341,7 +348,7 @@ const StrategicNodeGenerator: React.FC<StrategicNodeGeneratorProps> = ({
                   <h4 className="font-medium text-sm text-gray-700">Completion Time</h4>
                   <div className="flex items-center gap-1 mt-1">
                     <Clock className="h-3 w-3 text-gray-500" />
-                    <span className="text-sm">{response.metadata.estimatedCompletionTime}</span>
+                    <span className="text-sm">{response.metadata?.estimatedCompletionTime || 'N/A'}</span>
                   </div>
                 </div>
               </div>

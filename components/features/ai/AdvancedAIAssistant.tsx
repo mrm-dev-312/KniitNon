@@ -83,6 +83,12 @@ interface AdvancedAIAssistantProps {
   researchFocus?: string;
   onNodeSuggestionApply?: (node: Partial<NodeData>) => void;
   onSuggestionImplement?: (suggestion: AdvancedSuggestion) => void;
+  /**
+   * Controls whether the component should automatically generate suggestions
+   * on first mount when nodes are present. Disabled in tests to avoid timing
+   * flakiness around loading state.
+   */
+  autoGenerate?: boolean;
 }
 
 const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
@@ -90,7 +96,8 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
   currentContext,
   researchFocus,
   onNodeSuggestionApply,
-  onSuggestionImplement
+  onSuggestionImplement,
+  autoGenerate = true
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<AdvancedAIResponse | null>(null);
@@ -145,10 +152,15 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
 
   // Auto-generate suggestions when component mounts or nodes change significantly
   useEffect(() => {
+    if (!autoGenerate) return;
     if (nodes.length > 0 && !aiResponse) {
+      // Intentionally not adding generateAdvancedSuggestions to deps to avoid re-runs
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       generateAdvancedSuggestions();
     }
-  }, [nodes.length]);
+    // aiResponse excluded: only want initial generation when empty
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length, autoGenerate]);
 
   const handleImplementSuggestion = (suggestion: AdvancedSuggestion) => {
     setImplementedSuggestions(prev => {
@@ -266,25 +278,25 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="suggestions" className="flex items-center gap-1">
                 <Lightbulb className="h-3 w-3" />
-                Suggestions ({aiResponse.suggestions.length})
+                Suggestions ({aiResponse?.suggestions?.length || 0})
               </TabsTrigger>
               <TabsTrigger value="gaps" className="flex items-center gap-1">
                 <Search className="h-3 w-3" />
-                Gaps ({aiResponse.researchGaps.length})
+                Gaps ({aiResponse?.researchGaps?.length || 0})
               </TabsTrigger>
               <TabsTrigger value="clusters" className="flex items-center gap-1">
                 <Network className="h-3 w-3" />
-                Clusters ({aiResponse.topicClusters.length})
+                Clusters ({aiResponse?.topicClusters?.length || 0})
               </TabsTrigger>
               <TabsTrigger value="auto-nodes" className="flex items-center gap-1">
                 <BookOpen className="h-3 w-3" />
-                Auto Nodes ({aiResponse.automaticNodes.length})
+                Auto Nodes ({aiResponse?.automaticNodes?.length || 0})
               </TabsTrigger>
             </TabsList>
 
             {/* Advanced Suggestions Tab */}
             <TabsContent value="suggestions" className="space-y-4">
-              {aiResponse.suggestions.map((suggestion) => (
+              {aiResponse?.suggestions?.map((suggestion) => (
                 <Card key={suggestion.id} className="relative">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -357,7 +369,7 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
 
             {/* Research Gaps Tab */}
             <TabsContent value="gaps" className="space-y-4">
-              {aiResponse.researchGaps.map((gap) => (
+              {aiResponse?.researchGaps?.map((gap) => (
                 <Card key={gap.id}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -393,7 +405,7 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
 
             {/* Topic Clusters Tab */}
             <TabsContent value="clusters" className="space-y-4">
-              {aiResponse.topicClusters.map((cluster) => (
+              {aiResponse?.topicClusters?.map((cluster) => (
                 <Card key={cluster.id}>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -438,7 +450,7 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
 
             {/* Automatic Nodes Tab */}
             <TabsContent value="auto-nodes" className="space-y-4">
-              {aiResponse.automaticNodes.map((node, index) => (
+              {aiResponse?.automaticNodes?.map((node, index) => (
                 <Card key={index}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -470,10 +482,10 @@ const AdvancedAIAssistant: React.FC<AdvancedAIAssistantProps> = ({
           <div className="mt-6 pt-4 border-t">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>
-                Analysis completed at {new Date(aiResponse.metadata.generatedAt).toLocaleTimeString()}
+                Analysis completed at {new Date(aiResponse?.metadata?.generatedAt || Date.now()).toLocaleTimeString()}
               </span>
               <span>
-                {aiResponse.metadata.nodeCount} nodes analyzed • {aiResponse.metadata.analysisDepth} level
+                {aiResponse?.metadata?.nodeCount || 0} nodes analyzed • {aiResponse?.metadata?.analysisDepth || 'Basic'} level
               </span>
             </div>
           </div>

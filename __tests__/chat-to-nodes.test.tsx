@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { expect } from '@jest/globals';
 import { Chat } from '@/components/features/ai/chat';
 import { useOutlineStore } from '@/lib/stores/outline-store';
 import { ChatContext, useChatContext } from '@/lib/contexts/ChatContext';
@@ -72,7 +73,7 @@ describe('Chat Component - Node Generation', () => {
       </ChatContext.Provider>
     );
 
-    expect(screen.getByPlaceholderText(/Type your message here.../)).toBeInTheDocument();
+  expect(screen.getByPlaceholderText(/Ask a research question/i)).toBeTruthy();
   });
 
   test('should call onNodesGenerated when nodes are generated', async () => {
@@ -93,7 +94,7 @@ describe('Chat Component - Node Generation', () => {
 
     // This test would need more complex setup to trigger the actual node generation
     // but at least we can verify the component renders with the props
-    expect(screen.getByPlaceholderText(/Type your message here.../)).toBeInTheDocument();
+  expect(screen.getByPlaceholderText(/Ask a research question/i)).toBeTruthy();
   });
 
   test('should accept autoGenerateNodes prop', () => {
@@ -111,6 +112,6 @@ describe('Chat Component - Node Generation', () => {
       </ChatContext.Provider>
     );
 
-    expect(screen.getByPlaceholderText(/Type your message here.../)).toBeInTheDocument();
+  expect(screen.getByPlaceholderText(/Ask a research question/i)).toBeTruthy();
   });
 });
