@@ -1,6 +1,6 @@
 # Research Engine Stage-Gated Pipeline (v2 Rewrite)
 
-Status: Active (Sections 0–1 schemas, StageEngine skeleton, GateEvaluator stub, feature flag `RESEARCH_PIPELINE_V2`, dual validation layer (Zod boundary + Ajv artifacts) implemented; remaining stages & adapters in progress).
+Status: Active (✅ Stage 0-1 core schemas COMPLETE with TypeScript domain models + AJV validation, StageEngine skeleton, GateEvaluator stub, feature flag `RESEARCH_PIPELINE_V2`, dual validation layer implemented; remaining stages & adapters in progress).
 
 ## 0. Overview & Intent
 
@@ -339,7 +339,8 @@ Quadrants (Quick Wins emphasized first):
 | Audio Abstract Export | S | Low | Fill-In | Optional Stage 5 |
 
 ## 20. Updated Immediate Next Actions (Supersedes Section 14)
-1. Implement core schemas (Stage 0 & 1).  
+
+1. ✅ COMPLETED: Implement core schemas (Stage 0 & 1) - JSON schemas + TypeScript domain interfaces + AJV validation layer  
 2. Build StageEngine base + GateEvaluator with JSON logic evaluator.  
 3. Implement CorpusSourceAdapter (ArXiv + CrossRef) + basic Corpus Dedup.  
 4. Add feature flag `RESEARCH_PIPELINE_V2` and stub endpoints.  
