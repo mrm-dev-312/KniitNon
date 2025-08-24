@@ -1,95 +1,89 @@
-# Copilot Instructions for AI Podcast Generator
+# AI Podcast Generator - Copilot Instructions
 
-Always use PostgreSQL (e.g., psycopg2 or asyncpg). Never use SQLite.
+## Project Context
+This is the AI Podcast Generator project implementing a stage-gated research pipeline. The system converts literature research into submission-ready manuscripts through 6 distinct stages (0-5).
 
-Use PowerShell syntax for shell commands with ';' separators, not '&&'.
+## Core Architecture
+- **Backend**: Python with FastAPI, SQLAlchemy, PostgreSQL
+- **Frontend**: React with TypeScript, Tailwind CSS  
+- **Research Pipeline**: Stage-gated system with artifact validation
+- **Database**: PostgreSQL only (never SQLite)
+- **Testing**: pytest for Python, Jest/Vitest for JavaScript/TypeScript
 
-Continue running each task end-to-end. If a command fails, diagnose, report the root cause, then retry.
+## Stage-Gated Pipeline Overview
+The research engine follows a strict 6-stage progression:
+- Stage 0: Exploration & Scope
+- Stage 1: Corpus Build  
+- Stage 2: Triage & Appraisal
+- Stage 3: Synthesis & Theming
+- Stage 4: Argument & Outline
+- Stage 5: Drafting & Polish
 
-Run setup/build steps in parallel when possible (e.g., spin up Docker+PostgreSQL and run migrations simultaneously).
+Each stage has defined inputs, outputs, and gate criteria that must be met before advancement.
 
-Never ask for user input mid-process. Only pause on explicit breakpoints or if the user types 'STOP' or presses 'Cancel'.
+## Development Patterns
 
-Support a manual break mechanism: if the user types 'STOP' or presses the 'Cancel' button, halt all remaining steps.
+### Database & Migrations
+- Always use absolute imports in Python: `from lib.database.models import SourceRecord`
+- Test migrations on clean database first
+- Use dedicated test database (aipodcastgen_test) 
+- Validate SQLAlchemy models match database schema
+- Implement rollback procedures for all migrations
 
-Before asking the user, always think through all possible options, debate pros and cons, and make a clear recommendation. Then, proceed with the recommended action automatically, unless 1000 steps have been used or the user explicitly types STOP.
+### Error Handling & Validation
+- Dual-layer validation: Zod at API boundaries, Ajv for internal artifacts
+- Schema-first approach with JSON Schema validation
+- Implement comprehensive error handling with proper logging
+- Use feature flag `RESEARCH_PIPELINE_V2` for new pipeline features
 
-## Foundation-First Debugging Approach
+### Testing Strategy
+- Use pytest with `--tb=short -x` flags for fast feedback
+- Implement test isolation with dedicated test database
+- Reset test fixtures between runs for clean state
+- Create factory functions for mock data generation
+- Validate mocks against TypeScript interfaces
 
-**PROVEN SUCCESS PATTERN - Always verify foundation before implementation details:**
-1. **Configuration**: Environment variables, database URLs, settings files
-2. **Dependencies**: Version compatibility, `pip check`, import validation  
-3. **Domain Model**: Schema/model alignment, table existence, relationships
-4. **Implementation**: Code-level fixes only after foundation is solid
-
-**This systematic approach prevents rabbit holes and exponentially reduces debugging time.**
-
-**Before major dependency changes:**
-- Run `pip check` to verify current state
-- Test upgrades in isolated environment first
-- Validate imports and basic functionality
-- Check for breaking changes in changelog
-- **Document rollback procedure before upgrading**
-
-**Domain Model Clarity (Critical for Multi-Entity Systems):**
-- Document domain concepts before coding (Podcast → Episode → AudioFile)
-- Get stakeholder approval on entity relationships
-- Use consistent naming across database, models, APIs, and documentation
-- Create/update entity relationship diagrams for complex changes
-- **Validate model-schema alignment with diagnostic scripts**
-
-**Clean Slate vs. Incremental Patching:**
-- For complex migration chains: consider clean slate with new initial migration
-- For broken dependency states: sometimes downgrade is better than forcing upgrade
-- For test database issues: complete isolation with automated reset
-- **Document the decision rationale for future reference**
-
-After implementing any feature or fix, automatically run all relevant tests and validate that the code passes. If tests fail, diagnose and fix the root cause before proceeding.
-
-**When running tests (e.g., Vitest via npm test), always use non-interactive flags like `--run` to prevent prompts and ensure automatic completion.**
-
-**For pytest, use `--tb=short -x` for fast failure feedback during development.**
-
-Always format code according to the project's style guide and run linting tools before considering a task complete.
-
-Document all new functions, classes, and modules with clear docstrings and usage examples. Update README and other documentation as needed.
-
-Check for security issues and outdated dependencies as part of the development process. Recommend and apply safe updates automatically.
-
-Implement robust error handling and logging for all new code, following best practices for the language and framework.
-
-For best performance, always select or attach only the relevant function or code block you want to edit. Avoid uploading or referencing entire files unless a full-file refactor is needed. Use clear, targeted prompts and batch small changes when possible.
-
-Always use absolute imports in Python scripts. Avoid relative imports, as they can cause `ModuleNotFoundError` when scripts are executed directly. Instead, structure your project to support absolute imports and run scripts as modules when necessary.
-
-## Database and Migration Best Practices
-
-**Test Environment Isolation:**
-- Use dedicated test database (aipodcastgen_test) completely separate from development
-- Ensure test fixtures match current schema automatically
-- Reset schema between test runs for clean state
-- Use transactions for test isolation where possible
-
-**Migration Strategy:**
-- Test all migrations on clean database first
-- Keep migrations simple and focused on single changes
-- Have automated rollback procedures for every migration
-- Consider squashing complex migration chains
-- Document migration dependencies and requirements
-
-**Schema Validation:**
-- Verify SQLAlchemy models match database tables before major changes
-- Use diagnostic scripts to check model/schema alignment
-- Ensure foreign key relationships are properly defined
-- Validate cascade delete behavior in test environment
+### Shell Commands
+- Use PowerShell syntax with ';' separators, not '&&'
+- Example: `command1; command2; command3`
 
 ## Quality Gates
-
 Before considering any task complete:
-- [ ] All relevant tests pass (`pytest --tb=short`)
-- [ ] No type annotation errors or warnings
-- [ ] Database schema matches model definitions
-- [ ] Migrations can upgrade and downgrade cleanly
-- [ ] Code is formatted and linted
-- [ ] Documentation updated with any changes
-- [ ] Error handling implemented for new code paths
+- [ ] All relevant tests pass
+- [ ] Code formatted and linted
+- [ ] Schema validation passes
+- [ ] Database migrations work both ways
+- [ ] Documentation updated
+- [ ] Error handling implemented
+
+## Domain-Specific Rules
+
+### Research Pipeline
+- Maintain stage isolation - later stages never mutate earlier artifacts
+- Every claim must link to source evidence with page references
+- Gate advancement only when measurable criteria are met
+- Export deliverables available at each stage for early value
+
+### Citation Management
+- Capture DOI and metadata for all sources
+- Use CrossRef for enrichment when available
+- Track citation integrity through audit module
+- Support multiple citation styles (APA, MLA, IEEE)
+
+### File Organization
+- Schemas in `lib/research-engine/schemas/`
+- Domain models in `lib/research-engine/domain/`
+- Prompt chains in `prompt-chains/stage-{n}/`
+- Adapters in `lib/research-engine/adapters/`
+
+## Performance Guidelines
+- Implement caching for external API calls
+- Use parallel processing for independent operations
+- Timebox all stages to prevent endless iteration
+- Monitor and log key metrics per stage
+
+## Security Considerations
+- Sandbox PDF extraction processes
+- Validate all external data inputs
+- Use secure HTTP clients with timeouts
+- Implement rate limiting for external APIs

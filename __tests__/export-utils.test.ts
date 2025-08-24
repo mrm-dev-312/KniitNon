@@ -4,8 +4,9 @@ import {
   generateFilename,
   downloadFile,
   ExportOptions 
-} from '@/lib/export-utils';
-import { OutlineNode } from '@/lib/stores/outline-store';
+} from '@/lib/features/export/export-utils';
+import { OutlineNode } from '@/lib/features/outline/stores/outline-store';
+import { jest } from '@jest/globals';
 
 // Mock DOM methods for file download
 const mockCreateElement = jest.fn();
@@ -263,7 +264,7 @@ describe('Export Utilities', () => {
       
       downloadFile(content, filename, 'text/markdown;charset=utf-8');
       
-      const mockElement = mockCreateElement.mock.results[0].value;
+      const mockElement = mockCreateElement.mock.results[0].value as any;
       expect(mockElement.href).toBe('mock-blob-url');
       expect(mockElement.download).toBe(filename);
     });

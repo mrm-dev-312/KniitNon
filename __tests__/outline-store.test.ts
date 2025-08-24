@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
-import { useOutlineStore, OutlineNode } from '@/lib/stores/outline-store';
+import { useOutlineStore, OutlineNode } from '@/lib/features/outline/stores/outline-store';
 
 // Mock fetch globally
-global.fetch = jest.fn();
+global.fetch = jest.fn() as any;
 
 describe('Outline Store', () => {
   beforeEach(() => {
@@ -16,7 +16,7 @@ describe('Outline Store', () => {
     });
     
     // Reset fetch mock
-    (fetch as jest.Mock).mockClear();
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockClear();
   });
 
   describe('Node Management', () => {
@@ -284,7 +284,8 @@ describe('Outline Store', () => {
         })
       };
 
-      (fetch as jest.Mock).mockResolvedValue(mockResponse);
+      const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+      mockFetch.mockResolvedValue(mockResponse as any);
 
       const { result } = renderHook(() => useOutlineStore());
 
@@ -326,7 +327,8 @@ describe('Outline Store', () => {
         statusText: 'Internal Server Error'
       };
 
-      (fetch as jest.Mock).mockResolvedValue(mockResponse);
+      const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+      mockFetch.mockResolvedValue(mockResponse as any);
 
       const { result } = renderHook(() => useOutlineStore());
 
@@ -362,7 +364,8 @@ describe('Outline Store', () => {
         json: jest.fn().mockResolvedValue({ title: 'Custom Outline' })
       };
 
-      (fetch as jest.Mock).mockResolvedValue(mockResponse);
+      const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+      mockFetch.mockResolvedValue(mockResponse as any);
 
       const { result } = renderHook(() => useOutlineStore());
 

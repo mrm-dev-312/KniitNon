@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EndpointMiddleware, ApiUtils } from '@/lib/api-middleware';
+import { EndpointMiddleware, ApiUtils } from '@/lib/api/middleware';
 
 // Force dynamic rendering for this route since it uses request.headers
 export const dynamic = 'force-dynamic';
@@ -215,3 +215,4 @@ async function handleGetNodes(request: NextRequest) {
 
 // Apply middleware with query parameter validation
 export const GET = EndpointMiddleware.research.nodes(handleGetNodes);
+

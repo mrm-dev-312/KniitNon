@@ -4,8 +4,8 @@ import "./globals.css";
 import { DragDropProvider } from "@/components/providers/DragDropProvider";
 import { ChatProvider } from "@/lib/contexts/ChatContext";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ToastProvider } from "@/components/ToastProvider";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 

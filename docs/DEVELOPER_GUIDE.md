@@ -17,68 +17,80 @@ This guide covers the development setup, architecture, and implementation detail
 - **Deployment**: Vercel with GitHub Actions CI/CD
 
 ### Project Structure
-```
+
+```text
 /
 ├── app/                    # Next.js 14 app router
 │   ├── (dashboard)/        # Dashboard route group
-│   ├── api/               # API routes
-│   │   ├── auth/          # NextAuth.js endpoints
-│   │   ├── projects/      # Project management APIs
-│   │   └── research/      # Research-related APIs
-│   ├── dashboard/         # Dashboard page
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── ui/               # Shadcn/UI components
-│   ├── providers/        # Context providers
-│   └── __tests__/        # Component tests
-├── lib/                  # Utilities and shared code
-│   ├── stores/           # Zustand stores
-│   ├── contexts/         # React contexts
-│   └── accessibility.ts  # Accessibility utilities
-├── docs/                 # Documentation
-├── prisma/              # Database schema and migrations
-└── __tests__/           # Global tests
+│   ├── api/                # API routes
+│   │   ├── auth/           # NextAuth.js endpoints
+│   │   ├── projects/       # Project management APIs
+│   │   └── research/       # Research-related APIs
+│   ├── dashboard/          # Dashboard page
+│   ├── globals.css         # Global styles
+│   ├── layout.tsx          # Root layout
+│   └── page.tsx            # Home page
+├── components/             # React components
+│   ├── ui/                 # Shadcn/UI components
+│   ├── providers/          # Context providers
+│   └── __tests__/          # Component tests
+├── lib/                    # Utilities and shared code
+│   ├── stores/             # Zustand stores
+│   ├── contexts/           # React contexts
+│   ├── accessibility.ts    # Accessibility utilities
+│   ├── api/endpoint-middleware.ts # Central API wrapper (flags, auth stub, zod)
+│   ├── validation/ajv.ts   # JSON Schema validator (Ajv) for pipeline artifacts
+│   └── research-engine/    # Stage engine core (StageEngine, GateEvaluator, types)
+├── docs/                   # Documentation
+├── prisma/                 # Database schema and migrations
+└── __tests__/              # Global tests
 ```
 
 ## Development Setup
 
 ### Prerequisites
+
 - Node.js 18+ and npm
 - PostgreSQL database
 - Git
 
 ### Initial Setup
+
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd KniitNon
-   ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```bash
+git clone <repository-url>
+cd KniitNon
+```
 
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your values
-   ```
+1. **Install dependencies**
 
-4. **Set up database**
-   ```bash
-   npx prisma migrate dev
-   npx prisma generate
-   ```
+```bash
+npm install
+```
 
-5. **Start development server**
-   ```bash
-   npm run dev
-   ```
+1. **Set up environment variables**
+
+```bash
+cp .env.example .env.local
+# Edit .env.local with your values
+```
+
+1. **Set up database**
+
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+1. **Start development server**
+
+```bash
+npm run dev
+```
 
 ### Required Environment Variables
+
 ```bash
 # Database
 POSTGRES_PRISMA_URL="postgresql://username:password@localhost:5432/database"
@@ -96,47 +108,108 @@ GITHUB_SECRET="your-github-client-secret"
 # AI APIs
 OPENAI_API_KEY="your-openai-api-key"
 GEMINI_API_KEY="your-gemini-api-key"
+
+# Feature Flags
+RESEARCH_PIPELINE_V2=0
 ```
+
+## API Development (Updated)
+
+- **Middleware**: `lib/api/endpoint-middleware.ts`
+- **Validation (Dual Layer)**: Zod (request) + Ajv (artifact)
+- **Feature Flag**: `RESEARCH_PIPELINE_V2` guards new stage endpoints
+- **Artifacts**: JSON Schemas under `/schemas` loaded by `lib/validation/ajv.ts`
+
+### Example Endpoint Pattern
+
+```typescript
+import { endpointHandler } from '@/lib/api/endpoint-middleware'
+import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server'
+
+const BodySchema = z.object({ topic: z.string().min(3) })
+
+export async function POST(request: NextRequest) {
+  return endpointHandler(request, {
+    requireAuth: true,
+    validation: { body: BodySchema },
+    featureFlag: 'RESEARCH_PIPELINE_V2'
+  }, async (_req, ctx) => {
+    return NextResponse.json({ ok: true, data: { echo: ctx.body.topic } })
+  })
+}
+```
+
+### Security Considerations (Updated)
+
+- Authentication (session validation – planned integration)
+- Authorization (ownership/role checks – planned)
+- Input Validation (Zod + Ajv layering)
+- Feature Flags short‑circuit disabled capabilities
+- Rate Limiting (to be reintroduced)
+
+### Research Pipeline (Stage Engine)
+
+- Stage orchestration via `StageEngine`
+- Gate evaluation via `GateEvaluator`
+- Artifacts validated by Ajv against `/schemas`
+- Disabled by default (`RESEARCH_PIPELINE_V2=0`)
+- Extensible adapters (retrieval, enrichment, summarization – planned)
+
 
 ## Core Features
 
+ 
 ### 1. User Authentication
+
 - **Implementation**: NextAuth.js with OAuth providers
 - **Providers**: Google, GitHub
 - **Components**: `AuthButton`, `AuthProvider`
 - **Security**: JWT tokens, secure cookies, CSRF protection
 
+ 
 ### 2. Project Management
+
 - **Implementation**: Prisma-based project storage
 - **Features**: Save/load projects, pagination, user isolation
 - **Components**: `ProjectManager`
 - **API**: `/api/projects` endpoints
 
+ 
 ### 3. Research Visualization
+
 - **Implementation**: D3.js integration with React
 - **Features**: Interactive graphs, node selection, drag-and-drop
 - **Components**: `D3Visualization`, `OptimizedD3Visualization`
 - **Performance**: Virtualization for large datasets
 
+ 
 ### 4. Outline Building
+
 - **Implementation**: Zustand store with drag-and-drop
 - **Features**: Node reordering, export functionality, detail levels
 - **Components**: `OutlineBuilder`, `AdjustableDetailSlider`
 - **State**: `outline-store.ts`
 
+ 
 ### 5. Security Features
+
 - **Rate Limiting**: In-memory rate limiting for API endpoints
 - **Input Validation**: Zod schema validation
 - **Authentication**: Required for sensitive operations
 - **CORS**: Configurable cross-origin resource sharing
 
+ 
 ### 6. Accessibility
+
 - **Keyboard Navigation**: Full keyboard support
 - **Screen Reader**: ARIA labels and descriptions
 - **Focus Management**: Proper focus handling
 - **Utilities**: `lib/accessibility.ts`
 
+ 
 ### 7. Performance Optimization
+
 - **Virtualization**: Large list optimization
 - **Pagination**: API response pagination
 - **D3.js Optimization**: Efficient rendering
@@ -144,7 +217,9 @@ GEMINI_API_KEY="your-gemini-api-key"
 
 ## Development Workflow
 
+ 
 ### Code Standards
+
 - **TypeScript**: Strict mode enabled
 - **ESLint**: Code linting and formatting
 - **Prettier**: Code formatting

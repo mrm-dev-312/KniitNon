@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession } from 'next-auth/react';
-import { ProjectManager } from '../ProjectManager';
+import { ProjectManager } from '../features/project/ProjectManager';
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({
@@ -62,6 +62,7 @@ describe('ProjectManager', () => {
   it('renders project manager when user is authenticated', () => {
     const mockSession = {
       user: {
+        id: '1',
         name: 'John Doe',
         email: 'john@example.com',
       },
@@ -81,6 +82,7 @@ describe('ProjectManager', () => {
   it('loads saved projects when dialog is opened', async () => {
     const mockSession = {
       user: {
+        id: 'user-1',
         name: 'John Doe',
         email: 'john@example.com',
       },
@@ -121,6 +123,7 @@ describe('ProjectManager', () => {
   it('saves current project when save button is clicked', async () => {
     const mockSession = {
       user: {
+        id: 'user-1',
         name: 'John Doe',
         email: 'john@example.com',
       },
@@ -179,6 +182,7 @@ describe('ProjectManager', () => {
     
     const mockSession = {
       user: {
+        id: 'user-1',
         name: 'John Doe',
         email: 'john@example.com',
       },

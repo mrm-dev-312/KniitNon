@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       });
     }
 
-    let response;
+  let response;
 
     if (aiProvider === 'gemini') {
       const chat = aiClient.startChat({
@@ -57,10 +57,16 @@ export async function POST(req: Request) {
       const stream = response.stream.pipeThrough(new TextEncoderStream());
       return new StreamingTextResponse(stream);
     } else {
+      // Research-assistant steering system message
+      const systemMessage = {
+        role: 'system' as const,
+        content: 'You are a Research Assistant. Start at a clear, neutral, Wikipedia-level explanation, then progressively guide the user into deeper research topics. Ask one concise probing question at a time to clarify intent. Structure responses with: brief overview, 2-4 key subtopics, and 1-2 suggested next questions. Avoid filler. When appropriate, propose how to turn the topic into research nodes (topic → subtopic → detail).'
+      };
+
       response = await aiClient.chat.completions.create({
         model: modelName,
         stream: true,
-        messages: messages,
+        messages: [systemMessage, ...messages],
       });
       const stream = OpenAIStream(response);
       return new StreamingTextResponse(stream);
@@ -75,3 +81,4 @@ export async function POST(req: Request) {
     });
   }
 }
+

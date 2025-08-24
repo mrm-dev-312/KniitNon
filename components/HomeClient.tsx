@@ -1,11 +1,11 @@
 'use client';
 
-import { Chat } from '@/components/ai/chat';
+import { Chat } from '@/components/features/ai/chat';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useChatContext } from '@/lib/contexts/ChatContext';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function HomeClient() {
   const { messages, hasMessages } = useChatContext();
@@ -14,37 +14,84 @@ export default function HomeClient() {
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [previewTopics, setPreviewTopics] = useState<string[]>([]);
 
+  const generatePreviewTopics = useCallback(() => {
+    // Extract meaningful topics from conversation using improved analysis
+    const topics: string[] = [];
+    
+    // Look for structured content patterns (outlines, headings, technical terms)
+    for (const message of messages) {
+      const content = message.content.toLowerCase();
+      
+      // Extract main section titles (Roman numerals like "II. The Development of ChatGPT")
+      const mainSectionMatches = message.content.match(/(?:^|\n)\s*(?:I{1,3}|IV|V|VI{1,3}|IX|X)\.\s+(.+?)(?=\n|$)/gm);
+      if (mainSectionMatches) {
+        mainSectionMatches.forEach(match => {
+          const topic = match.replace(/(?:^|\n)\s*(?:I{1,3}|IV|V|VI{1,3}|IX|X)\.\s+/, '').trim();
+          if (topic.length > 5 && topic.length < 80) {
+            topics.push(topic);
+          }
+        });
+      }
+      
+      // Extract topics from structured outlines (subsections)
+      const outlineMatches = message.content.match(/(?:^\s*(?:\d+\.|\-|\*)\s+)(.+)/gm);
+      if (outlineMatches) {
+        outlineMatches.forEach(match => {
+          const topic = match.replace(/^\s*(?:\d+\.|\-|\*)\s+/, '').trim();
+          if (topic.length > 10 && topic.length < 60) {
+            topics.push(topic);
+          }
+        });
+      }
+      
+      // Extract section headings (### format) but exclude numbered sections
+      const headingMatches = message.content.match(/#{1,4}\s+(.+)/g);
+      if (headingMatches) {
+        headingMatches.forEach(match => {
+          const topic = match.replace(/#{1,4}\s+/, '').trim();
+          // Exclude numbered section headings like "1", "2.", "1.1", etc.
+          if (topic.length > 5 && topic.length < 60 && 
+              !topic.includes('Research Outline') &&
+              !topic.match(/^\d+\.?$/) &&  // Exclude pure numbers like "1" or "1."
+              !topic.match(/^\d+\.\d+/) && // Exclude numbered subsections like "1.1"
+              !topic.match(/^[A-Za-z]\.$/) && // Exclude single letters like "A."
+              topic !== 'Introduction' && topic !== 'Conclusion') {
+            topics.push(topic);
+          }
+        });
+      }
+      
+      // Extract technical or academic terms (capitalized phrases) as fallback
+      if (content.includes('research') || content.includes('analysis') || content.includes('study')) {
+        const academicMatches = message.content.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b/g);
+        if (academicMatches) {
+          academicMatches.forEach(match => {
+            if (match.length > 8 && match.length < 50 && 
+                !match.includes('User') && !match.includes('AI') && 
+                !match.includes('Hello') && !match.includes('Generate')) {
+              topics.push(match);
+            }
+          });
+        }
+      }
+    }
+    
+    // Remove duplicates and select best topics, prioritizing longer/more detailed topics
+    const uniqueTopics = Array.from(new Set(topics))
+      .filter(topic => topic.length > 3 && topic.length < 50)
+      .sort((a, b) => b.length - a.length) // Longer topics first
+      .slice(0, 4);
+      
+    setPreviewTopics(uniqueTopics.length > 0 ? uniqueTopics : ['Research Topics Identified']);
+  }, [messages]);
+
   // Show suggestion after user has had a meaningful conversation
   useEffect(() => {
     if (messages.length >= 4) { // At least 2 exchanges
       setShowSuggestion(true);
       generatePreviewTopics();
     }
-  }, [messages]);
-
-  const generatePreviewTopics = () => {
-    // Extract key topics from recent messages for preview
-    const recentMessages = messages.slice(-4);
-    const topics = recentMessages
-      .filter(m => m.content.length > 20)
-      .map(m => {
-        const words = m.content.split(' ');
-        // Find capitalized words or topics (simple heuristic)
-        const topics = words.filter(word => 
-          word.length > 4 && 
-          (word[0] === word[0].toUpperCase() || 
-           word.toLowerCase().includes('research') ||
-           word.toLowerCase().includes('study') ||
-           word.toLowerCase().includes('analysis'))
-        );
-        return topics.slice(0, 2);
-      })
-      .flat()
-      .filter((topic, index, arr) => arr.indexOf(topic) === index)
-      .slice(0, 3);
-    
-    setPreviewTopics(topics);
-  };
+  }, [messages, generatePreviewTopics]);
 
   const handleOpenResearchExplorer = async () => {
     if (hasMessages && messages.length > 0) {

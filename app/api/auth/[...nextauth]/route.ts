@@ -1,5 +1,5 @@
 import NextAuth from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions } from "@/lib/features/auth/auth"
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

@@ -38,33 +38,48 @@ export async function POST(request: Request) {
       .map((msg: ChatMessage) => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
       .join('\n');
 
-    // System prompt for generating research nodes
+    // System prompt for generating research nodes with proper root structure
     const systemPrompt = `You are a research assistant that converts conversations into structured research nodes for academic exploration. 
 
-Given a chat conversation, extract the main topics, subtopics, and details that would be valuable for research. Generate a JSON response with research nodes that follow this structure:
+Given a chat conversation, identify the MAIN RESEARCH SUBJECT as the root, then extract related topics, subtopics, and details. Generate a JSON response that follows this hierarchical structure:
 
 {
   "summary": "Brief summary of the conversation topics",
+  "rootTitle": "The main subject/theme of the entire conversation",
   "nodes": [
     {
-      "id": "unique-id",
-      "title": "Node Title",
-      "content": "Detailed content about this research area",
-      "type": "topic" | "subtopic" | "detail",
-      "connections": ["id1", "id2"], // IDs of related nodes
+      "id": "root",
+      "title": "Main Research Subject", // This should be the overarching theme
+      "content": "Overview of the main research area derived from the conversation",
+      "type": "topic",
+      "connections": [], // Root connects to main topics
+      "source": "Primary conversation theme",
+      "depth": 0,
+      "lens": "Technology" | "Science" | "History" | "Philosophy" | "Ethics" | "Other",
+      "children": ["topic-1", "topic-2", ...] // IDs of main topic children
+    },
+    {
+      "id": "topic-1",
+      "title": "Major Topic 1",
+      "content": "Detailed content about this major topic area",
+      "type": "topic",
+      "connections": ["root"],
       "source": "Derived from conversation",
-      "depth": 0-2, // 0 = main topic, 1 = subtopic, 2 = detail
-      "lens": "Technology" | "Science" | "History" | "Philosophy" | "Ethics" | "Other"
-    }
+      "depth": 1,
+      "lens": "...",
+      "children": ["subtopic-1-1", ...]
+    },
+    // ... more topics and subtopics
   ]
 }
 
-Make sure to:
-1. Create meaningful connections between related concepts
-2. Include at least 5-10 nodes for a rich research experience
-3. Vary the types (topic, subtopic, detail) appropriately
-4. Extract specific details that can lead to further research
-5. Ensure each node has substantial content for exploration
+CRITICAL: The first node must ALWAYS be the root node representing the main subject of the entire conversation. All other nodes should be hierarchically connected to this root. Make sure to:
+1. Identify the core subject that encompasses the entire conversation as the root
+2. Create 2-4 main topic children of the root
+3. Add 3-6 subtopics under the main topics
+4. Include specific details that can lead to further research
+5. Ensure proper parent-child relationships in the children arrays
+6. The root title should be the main subject, not generic terms like "Research Topics"
 
 Conversation to analyze:
 ${chatSummary}`;
@@ -99,20 +114,40 @@ ${chatSummary}`;
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       
-      // Fallback: Create a basic node structure from the conversation
+      // Fallback: Create a basic node structure from the conversation with proper root
       const topics = extractTopicsFromChat(messages);
+      const rootTitle = determineRootTitle(messages, topics);
+      
       parsedResponse = {
         summary: "Research topics extracted from conversation",
-        nodes: topics.map((topic, index) => ({
-          id: `chat-node-${index + 1}`,
-          title: topic.title,
-          content: topic.content,
-          type: index === 0 ? 'topic' : (index < 3 ? 'subtopic' : 'detail'),
-          connections: index > 0 ? [`chat-node-${index}`] : [],
-          source: 'Derived from conversation',
-          depth: Math.min(index, 2),
-          lens: 'Other'
-        }))
+        rootTitle: rootTitle,
+        nodes: [
+          // Create root node
+          {
+            id: 'root',
+            title: rootTitle,
+            content: `Main research area encompassing: ${topics.slice(0, 3).map(t => t.title).join(', ')}`,
+            type: 'topic',
+            connections: [],
+            source: 'Primary conversation theme',
+            depth: 0,
+            lens: 'Other',
+            children: topics.slice(0, 5).map((_, index) => `topic-${index + 1}`)
+          },
+          // Create child topics
+          ...topics.slice(0, 5).map((topic, index) => ({
+            id: `topic-${index + 1}`,
+            title: topic.title,
+            content: topic.content,
+            type: index < 2 ? 'topic' : 'subtopic',
+            connections: ['root'],
+            source: 'Derived from conversation',
+            depth: index < 2 ? 1 : 2,
+            lens: 'Other',
+            children: [],
+            parents: ['root']
+          }))
+        ]
       };
     }
 
@@ -147,30 +182,137 @@ ${chatSummary}`;
   }
 }
 
-// Fallback function to extract basic topics from chat
+// Helper function to determine the root title from conversation
+function determineRootTitle(messages: ChatMessage[], topics: Array<{title: string, content: string}>): string {
+  // Look for overarching themes or repeated concepts
+  const allText = messages.map(m => m.content.toLowerCase()).join(' ');
+  
+  // Common research themes
+  const themes = [
+    'artificial intelligence', 'machine learning', 'neural networks',
+    'climate change', 'sustainability', 'environmental science',
+    'blockchain', 'cryptocurrency', 'digital transformation',
+    'biotechnology', 'genetics', 'medical research',
+    'quantum computing', 'physics', 'mathematics',
+    'psychology', 'cognitive science', 'neuroscience',
+    'economics', 'finance', 'business strategy',
+    'history', 'philosophy', 'sociology'
+  ];
+  
+  // Find theme with most occurrences
+  let bestTheme = '';
+  let maxCount = 0;
+  
+  themes.forEach(theme => {
+    const count = (allText.match(new RegExp(theme, 'gi')) || []).length;
+    if (count > maxCount) {
+      maxCount = count;
+      bestTheme = theme;
+    }
+  });
+  
+  if (bestTheme && maxCount > 1) {
+    // Capitalize properly
+    return bestTheme.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  }
+  
+  // Fallback: use the longest/most detailed topic
+  if (topics.length > 0) {
+    const bestTopic = topics.reduce((prev, current) => 
+      current.title.length > prev.title.length ? current : prev
+    );
+    return bestTopic.title.length > 50 ? 
+      bestTopic.title.substring(0, 47) + '...' : 
+      bestTopic.title;
+  }
+  
+  // Final fallback
+  return 'Research Discussion Topics';
+}
+
+// Improved fallback function to extract meaningful topics from chat
 function extractTopicsFromChat(messages: ChatMessage[]): Array<{title: string, content: string}> {
   const topics: Array<{title: string, content: string}> = [];
   
-  messages.forEach((message, index) => {
-    if (message.role === 'user' && message.content.length > 20) {
-      // Extract potential topics from user messages
-      const words = message.content.split(' ');
-      if (words.length > 3) {
-        topics.push({
-          title: words.slice(0, 4).join(' ').replace(/[?!.]/g, ''),
-          content: message.content
-        });
+  messages.forEach((message) => {
+    if (message.content.length < 50) return; // Skip very short messages
+    
+    // Extract structured outline content (Roman numerals, numbered lists)
+    const outlineMatches = message.content.match(/(?:^\s*(?:I{1,3}|IV|V|VI{1,3}|IX|X|\d+\.|\-|\*)\s+)(.+?)(?=\n|$)/gm);
+    if (outlineMatches && outlineMatches.length > 3) {
+      outlineMatches.slice(0, 8).forEach((match, index) => {
+        const cleanTitle = match.replace(/^\s*(?:I{1,3}|IV|V|VI{1,3}|IX|X|\d+\.|\-|\*)\s+/, '').trim();
+        if (cleanTitle.length > 10 && cleanTitle.length < 100) {
+          topics.push({
+            title: cleanTitle,
+            content: `Research area: ${cleanTitle}. Explore this topic in depth through academic investigation and analysis.`
+          });
+        }
+      });
+    }
+    
+    // Extract section headings (### format) but exclude numbered sections
+    const headingMatches = message.content.match(/#{1,4}\s+(.+)/g);
+    if (headingMatches) {
+      headingMatches.slice(0, 6).forEach(match => {
+        const cleanTitle = match.replace(/#{1,4}\s+/, '').trim();
+        // Exclude numbered section headings and generic titles
+        if (cleanTitle.length > 5 && cleanTitle.length < 80 &&
+            !cleanTitle.match(/^\d+\.?$/) &&  // Exclude pure numbers like "1" or "1."
+            !cleanTitle.match(/^\d+\.\d+/) && // Exclude numbered subsections like "1.1"
+            !cleanTitle.match(/^[A-Za-z]\.$/) && // Exclude single letters like "A."
+            cleanTitle !== 'Introduction' && cleanTitle !== 'Conclusion' &&
+            cleanTitle !== 'Research Outline') {
+          topics.push({
+            title: cleanTitle,
+            content: `Key research area: ${cleanTitle}. This topic offers multiple avenues for academic exploration and investigation.`
+          });
+        }
+      });
+    }
+    
+    // Extract technical terms and proper nouns for research topics
+    if (message.content.includes('research') || message.content.includes('study') || message.content.includes('analysis')) {
+      const technicalMatches = message.content.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:in|of|for|and)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)*\b/g);
+      if (technicalMatches) {
+        technicalMatches
+          .filter(match => 
+            match.length > 8 && match.length < 60 && 
+            !match.includes('User') && !match.includes('Hello') && 
+            !match.includes('Generate') && !match.includes('Research Map')
+          )
+          .slice(0, 4)
+          .forEach(match => {
+            topics.push({
+              title: match.trim(),
+              content: `Academic research topic: ${match}. This area presents opportunities for comprehensive study and scholarly investigation.`
+            });
+          });
       }
     }
   });
 
-  // If no topics found, create a default one
-  if (topics.length === 0) {
-    topics.push({
-      title: 'Conversation Topics',
-      content: 'Research topics derived from the conversation for further exploration.'
-    });
+  // If we found structured topics, use them; otherwise create a basic fallback
+  if (topics.length > 0) {
+    return topics.slice(0, 10); // Limit to 10 best topics
   }
 
-  return topics.slice(0, 8); // Limit to 8 topics
+  // Final fallback: create basic topics from message content
+  const fallbackTopics = messages
+    .filter(m => m.content.length > 30)
+    .slice(0, 3)
+    .map((message, index) => ({
+      title: `Discussion Topic ${index + 1}`,
+      content: message.content.length > 200 ? 
+        message.content.substring(0, 200) + '...' : 
+        message.content
+    }));
+
+  return fallbackTopics.length > 0 ? fallbackTopics : [{
+    title: 'Conversation Analysis',
+    content: 'Research topics and themes derived from the conversation for further academic exploration.'
+  }];
 }
+

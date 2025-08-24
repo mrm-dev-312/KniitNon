@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "noEmit": true
+  },
+  "include": [
+    "jest.global.d.ts",
+    "jest.setup.ts",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    "components/**/*.test.ts",
+    "components/**/*.test.tsx",
+    "components/__tests__/**/*.ts",
+    "components/__tests__/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx"
+  ],
+  "exclude": [
+    "cypress",
+    "node_modules"
+  ]
+}

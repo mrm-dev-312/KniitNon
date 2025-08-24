@@ -9,55 +9,72 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-    
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-    
+        cache: 'npm'
+
+    - name: Cache backend dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Cache frontend dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+
     - name: Install backend dependencies
       run: |
         cd backend
         pip install -r requirements.txt
-    
+
     - name: Install frontend dependencies
       run: |
         cd frontend
         npm install
-    
+
     - name: Run database migrations
       run: |
         cd backend
         alembic upgrade head
-    
+
     - name: Start backend server
       run: |
         cd backend
         python run_server.py &
         sleep 5
-    
+
     - name: Run smoke tests
       run: |
         node scripts/smoke-test.js
-    
+
     - name: Run backend tests
       run: |
         cd backend
-        python -m pytest
-    
+        pytest --tb=short -x
+
     - name: Run frontend tests
       run: |
         cd frontend
-        npm test -- --run
-    
+        npm test -- --ci
+
     - name: Build frontend
       run: |
         cd frontend

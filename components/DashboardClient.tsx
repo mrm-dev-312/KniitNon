@@ -1,33 +1,44 @@
 'use client';
 
 import React, { useState } from 'react';
-import OutlineBuilder from '@/components/OutlineBuilder';
-import HierarchicalOutlineBuilder from '@/components/HierarchicalOutlineBuilder';
-import NodeHierarchyBuilder from '@/components/NodeHierarchyBuilder';
-import AdjustableDetailSlider from '@/components/AdjustableDetailSlider';
-import VisualizationCanvas from '@/components/VisualizationCanvas';
-import AdvancedAIAssistant from '@/components/AdvancedAIAssistant';
-import StrategicNodeGenerator from '@/components/StrategicNodeGenerator';
-import { Chat } from '@/components/ai/chat';
+import OutlineBuilder from '@/components/features/outline/OutlineBuilder';
+import AdjustableDetailSlider from '@/components/shared/AdjustableDetailSlider';
+import VisualizationCanvas from '@/components/features/visualization/VisualizationCanvas';
+import HierarchicalVisualization from '@/components/features/visualization/HierarchicalVisualization';
+import AdvancedAIAssistant from '@/components/features/ai/AdvancedAIAssistant';
+import StrategicNodeGenerator from '@/components/features/ai/StrategicNodeGenerator';
+import { Chat } from '@/components/features/ai/chat';
 import { AuthButton } from '@/components/AuthButton';
-import { ProjectManager } from '@/components/ProjectManager';
+import { ProjectManager } from '@/components/features/project/ProjectManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DetailLevel } from '@/components/AdjustableDetailSlider';
+import { DetailLevel } from '@/components/shared/AdjustableDetailSlider';
+import { useOutlineStore } from '@/lib/stores/outline-store';
+import { StructuredContentParser } from '@/lib/utils/structured-content-parser';
 import { Zap, FileText, Settings, MessageCircle } from 'lucide-react';
 
 export default function DashboardClient() {
   const [detailLevel, setDetailLevel] = useState<DetailLevel>('medium');
-  const [currentNodes, setCurrentNodes] = useState<any[]>([]);
   const [researchFocus, setResearchFocus] = useState<string>('');
-  const [useHierarchicalOutline, setUseHierarchicalOutline] = useState<boolean>(false);
+  const [useHierarchicalViz, setUseHierarchicalViz] = useState<boolean>(true);
+  const { addNode, nodes } = useOutlineStore();
+
+  // Convert OutlineNode to NodeData format expected by AdvancedAIAssistant
+  const convertToNodeData = (outlineNodes: any[]) => {
+    return outlineNodes.map(node => ({
+      id: node.id,
+      title: node.title,
+      content: node.content || '',
+      type: node.type,
+      connections: node.metadata?.relationships || [],
+      source: node.metadata?.source,
+      depth: node.order || 0,
+      lens: node.metadata?.lens
+    }));
+  };
 
   const handleDetailLevelChange = (level: DetailLevel) => {
     setDetailLevel(level);
     console.log('Detail level changed to:', level);
-  };
-
-  const handleOutlineStructureChange = (outline: any) => {
-    console.log('Hierarchical outline structure changed:', outline);
   };
 
   const handleNodeAssociation = (sectionId: string, nodeIds: string[]) => {
@@ -35,35 +46,57 @@ export default function DashboardClient() {
   };
 
   const handleNodeSuggestionApply = (node: any) => {
-    // Add the suggested node to the current research
+    // Add the suggested node to the outline store
     const newNode = {
-      ...node,
       id: node.id || `suggested-${Date.now()}`,
-      addedAt: new Date().toISOString()
+      title: node.title,
+      content: node.content || node.description || '',
+      type: node.type || 'topic',
+      order: nodes.length + 1,
+      parentId: node.parentId,
+      metadata: {
+        source: 'AI Suggestion',
+        confidence: node.confidence
+      }
     };
-    setCurrentNodes(prev => [...prev, newNode]);
+    addNode(newNode);
     console.log('Applied AI suggested node:', newNode);
   };
 
-  const handleStrategicNodesGenerated = (nodes: any[]) => {
-    // Add strategic nodes to current research
-    const formattedNodes = nodes.map(node => ({
-      ...node,
-      addedAt: new Date().toISOString(),
-      source: 'Strategic AI Generation'
+  const handleStrategicNodesGenerated = (strategicNodes: any[]) => {
+    // Add strategic nodes to outline store
+    const formattedNodes = strategicNodes.map((node, index) => ({
+      id: `strategic-${Date.now()}-${index}`,
+      title: node.title,
+      content: node.content || node.description || '',
+      type: node.type || 'topic',
+      order: nodes.length + index + 1,
+      parentId: node.parentId,
+      metadata: {
+        source: 'Strategic AI Generation',
+        confidence: node.confidence || 0.8
+      }
     }));
-    setCurrentNodes(prev => [...prev, ...formattedNodes]);
+    
+    formattedNodes.forEach(node => addNode(node));
     console.log('Strategic nodes generated:', formattedNodes);
   };
 
   const handleStrategicNodeAdopt = (node: any) => {
-    // Add individual strategic node to research
+    // Add individual strategic node to outline store
     const formattedNode = {
-      ...node,
-      addedAt: new Date().toISOString(),
-      source: 'Strategic AI Generation'
+      id: `strategic-single-${Date.now()}`,
+      title: node.title,
+      content: node.content || node.description || '',
+      type: node.type || 'topic',
+      order: nodes.length + 1,
+      parentId: node.parentId,
+      metadata: {
+        source: 'Strategic AI Generation',
+        confidence: node.confidence || 0.8
+      }
     };
-    setCurrentNodes(prev => [...prev, formattedNode]);
+    addNode(formattedNode);
     console.log('Strategic node adopted:', formattedNode);
   };
 
@@ -86,8 +119,40 @@ export default function DashboardClient() {
         </div>
         
         {/* Visualization Area */}
-        <div className="flex-1 p-6">
-          <VisualizationCanvas />
+        <div className="flex-1 p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Research Visualization</h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Visualization:</span>
+              <button
+                onClick={() => setUseHierarchicalViz(true)}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  useHierarchicalViz
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Hierarchical
+              </button>
+              <button
+                onClick={() => setUseHierarchicalViz(false)}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  !useHierarchicalViz
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Force Layout
+              </button>
+            </div>
+          </div>
+          <div className="flex-1">
+            {useHierarchicalViz ? (
+              <HierarchicalVisualization className="h-full" />
+            ) : (
+              <VisualizationCanvas />
+            )}
+          </div>
         </div>
       </div>
 
@@ -125,25 +190,11 @@ export default function DashboardClient() {
                 {/* Outline Type Toggle */}
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-sm">Outline Builder</h3>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs">Hierarchical:</label>
-                    <input
-                      type="checkbox"
-                      checked={useHierarchicalOutline}
-                      onChange={(e) => setUseHierarchicalOutline(e.target.checked)}
-                      className="rounded"
-                    />
-                  </div>
                 </div>
 
                 {/* Outline Builder */}
-                <div className="flex-1 overflow-hidden">            {useHierarchicalOutline ? (
-              <NodeHierarchyBuilder
-                onStructureUpdate={handleOutlineStructureChange}
-              />
-            ) : (
-                    <OutlineBuilder />
-                  )}
+                <div className="flex-1 overflow-hidden">
+                  <OutlineBuilder />
                 </div>
               </div>
             </TabsContent>
@@ -188,7 +239,7 @@ export default function DashboardClient() {
 
                   <TabsContent value="advanced">
                     <AdvancedAIAssistant
-                      nodes={currentNodes}
+                      nodes={convertToNodeData(nodes)}
                       researchFocus={researchFocus}
                       onNodeSuggestionApply={handleNodeSuggestionApply}
                       onSuggestionImplement={handleSuggestionImplement}
@@ -214,34 +265,69 @@ export default function DashboardClient() {
                           const lastAiResponse = chatContainer?.textContent?.replace('AI: ', '') || '';
                           
                           if (lastAiResponse && lastAiResponse.trim()) {
-                            // Parse AI response for potential node content
-                            const sentences = lastAiResponse.split('.').filter(s => s.trim().length > 0);
-                            const firstSentence = sentences[0]?.trim() || 'AI Generated Insight';
-                            
-                            const newNode = {
-                              id: `ai-response-${Date.now()}`,
-                              title: firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence,
-                              content: lastAiResponse.trim(),
-                              type: 'topic' as const,
-                              connections: [],
-                              addedAt: new Date().toISOString(),
-                              source: 'AI Chat Response'
-                            };
-                            setCurrentNodes(prev => [...prev, newNode]);
-                            console.log('Generated node from AI response:', newNode);
-                            
-                            // Trigger visualization update
-                            window.dispatchEvent(new CustomEvent('nodeAdded', { detail: newNode }));
-                            
-                            // Show success feedback
-                            const button = event.target as HTMLButtonElement;
-                            const originalText = button.textContent;
-                            button.textContent = 'Node Generated!';
-                            button.className = button.className.replace('bg-primary', 'bg-green-600');
-                            setTimeout(() => {
-                              button.textContent = originalText;
-                              button.className = button.className.replace('bg-green-600', 'bg-primary');
-                            }, 2000);
+                            // Use structured content parser to extract multiple nodes
+                            try {
+                              const parsedNodes = StructuredContentParser.parseResponse(lastAiResponse);
+                              const outlineNodes = StructuredContentParser.createOutlineNodes(parsedNodes, nodes.length);
+                              
+                              if (outlineNodes.length > 0) {
+                                // Add all parsed nodes to the store
+                                outlineNodes.forEach(node => addNode(node));
+                                console.log(`Generated ${outlineNodes.length} nodes from AI response:`, outlineNodes);
+                                
+                                // Trigger visualization update
+                                window.dispatchEvent(new CustomEvent('nodesAdded', { detail: outlineNodes }));
+                                
+                                // Show success feedback
+                                const button = event.target as HTMLButtonElement;
+                                const originalText = button.textContent;
+                                button.textContent = `${outlineNodes.length} Nodes Generated!`;
+                                button.className = button.className.replace('bg-primary', 'bg-green-600');
+                                setTimeout(() => {
+                                  button.textContent = originalText;
+                                  button.className = button.className.replace('bg-green-600', 'bg-primary');
+                                }, 3000);
+                              } else {
+                                // Fallback to single node creation
+                                const sentences = lastAiResponse.split('.').filter(s => s.trim().length > 0);
+                                const firstSentence = sentences[0]?.trim() || 'AI Generated Insight';
+                                
+                                const newNode = {
+                                  id: `ai-response-${Date.now()}`,
+                                  title: firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence,
+                                  content: lastAiResponse.trim(),
+                                  type: 'topic' as const,
+                                  order: nodes.length + 1,
+                                  metadata: {
+                                    source: 'AI Chat Response',
+                                    confidence: 0.8
+                                  }
+                                };
+                                addNode(newNode);
+                                console.log('Generated fallback node from AI response:', newNode);
+                                
+                                // Show success feedback
+                                const button = event.target as HTMLButtonElement;
+                                const originalText = button.textContent;
+                                button.textContent = 'Node Generated!';
+                                button.className = button.className.replace('bg-primary', 'bg-green-600');
+                                setTimeout(() => {
+                                  button.textContent = originalText;
+                                  button.className = button.className.replace('bg-green-600', 'bg-primary');
+                                }, 2000);
+                              }
+                            } catch (error) {
+                              console.error('Error parsing AI response:', error);
+                              // Show error feedback
+                              const button = event.target as HTMLButtonElement;
+                              const originalText = button.textContent;
+                              button.textContent = 'Parsing Error';
+                              button.className = button.className.replace('bg-primary', 'bg-red-600');
+                              setTimeout(() => {
+                                button.textContent = originalText;
+                                button.className = button.className.replace('bg-red-600', 'bg-primary');
+                              }, 2000);
+                            }
                           } else {
                             console.log('No AI response found to generate node from');
                             // Show error feedback
@@ -256,7 +342,7 @@ export default function DashboardClient() {
                           }
                         }}
                       >
-                        Generate Node from AI Response
+                        Generate Nodes from AI Response
                       </button>
                     </div>
                   </TabsContent>
@@ -266,62 +352,27 @@ export default function DashboardClient() {
 
             <TabsContent value="chat" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col">
-                <h3 className="font-semibold text-sm mb-3 flex-shrink-0">Research Chat</h3>
-                <div className="flex-1 overflow-hidden border rounded-lg min-h-0">
-                  <Chat />
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                    🧠 Research Chat Assistant
+                  </h3>
+                  <p className="text-xs text-blue-700">
+                    Ask research questions and I&apos;ll automatically generate knowledge nodes for your visualization.
+                    Try: &quot;Explain machine learning algorithms&quot; or &quot;Create a guide to climate change research&quot;
+                  </p>
                 </div>
-                <button
-                  className="mt-3 w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex-shrink-0"
-                  onClick={(event) => {
-                    // Extract nodes from AI responses in the chat
-                    const chatContainer = document.querySelector('[data-role="assistant"]:last-child');
-                    const lastAiResponse = chatContainer?.textContent?.replace('AI: ', '') || '';
-                    
-                    if (lastAiResponse && lastAiResponse.trim()) {
-                      // Parse AI response for potential node content
-                      const sentences = lastAiResponse.split('.').filter(s => s.trim().length > 0);
-                      const firstSentence = sentences[0]?.trim() || 'AI Generated Insight';
-                      
-                      const newNode = {
-                        id: `ai-response-${Date.now()}`,
-                        title: firstSentence.length > 50 ? firstSentence.substring(0, 50) + '...' : firstSentence,
-                        content: lastAiResponse.trim(),
-                        type: 'topic' as const,
-                        connections: [],
-                        addedAt: new Date().toISOString(),
-                        source: 'AI Chat Response'
-                      };
-                      setCurrentNodes(prev => [...prev, newNode]);
-                      console.log('Generated node from AI response:', newNode);
-                      
-                      // Trigger visualization update by dispatching a custom event
-                      window.dispatchEvent(new CustomEvent('nodeAdded', { detail: newNode }));
-                      
-                      // Show success feedback
-                      const button = event.target as HTMLButtonElement;
-                      const originalText = button.textContent;
-                      button.textContent = 'Node Generated!';
-                      button.className = button.className.replace('bg-primary', 'bg-green-600');
+                <div className="flex-1 overflow-hidden border rounded-lg min-h-0">
+                  <Chat 
+                    onNodesGenerated={(count) => {
+                      console.log(`Chat generated ${count} nodes, total nodes now: ${nodes.length + count}`);
+                      // Trigger a re-render of visualizations
                       setTimeout(() => {
-                        button.textContent = originalText;
-                        button.className = button.className.replace('bg-green-600', 'bg-primary');
-                      }, 2000);
-                    } else {
-                      console.log('No AI response found to generate node from');
-                      // Show error feedback
-                      const button = event.target as HTMLButtonElement;
-                      const originalText = button.textContent;
-                      button.textContent = 'No AI response found';
-                      button.className = button.className.replace('bg-primary', 'bg-red-600');
-                      setTimeout(() => {
-                        button.textContent = originalText;
-                        button.className = button.className.replace('bg-red-600', 'bg-primary');
-                      }, 2000);
-                    }
-                  }}
-                >
-                  Generate Node from AI Response
-                </button>
+                        window.dispatchEvent(new CustomEvent('chatNodesAdded', { detail: { count } }));
+                      }, 100);
+                    }}
+                    autoGenerateNodes={true}
+                  />
+                </div>
               </div>
             </TabsContent>
 
@@ -340,14 +391,14 @@ export default function DashboardClient() {
                   <div>
                     <label className="text-sm font-medium">Active Nodes</label>
                     <p className="text-sm text-muted-foreground">
-                      {currentNodes.length} nodes in current research
+                      {nodes.length} nodes in current research
                     </p>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium">AI Analysis Status</label>
                     <p className="text-sm text-muted-foreground">
-                      {currentNodes.length > 0 ? 'Ready for analysis' : 'No nodes available'}
+                      {nodes.length > 0 ? 'Ready for analysis' : 'No nodes available'}
                     </p>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 # Research Engine Stage-Gated Pipeline (v2 Rewrite)
 
-Status: Draft pending approval (replaces prior "cartographer" plan; removes ancestor path focus).
+Status: Active (Sections 0–1 schemas, StageEngine skeleton, GateEvaluator stub, feature flag `RESEARCH_PIPELINE_V2`, dual validation layer (Zod boundary + Ajv artifacts) implemented; remaining stages & adapters in progress).
 
 ## 0. Overview & Intent
 
@@ -11,9 +11,11 @@ Guiding principles:
 - Stage isolation: Inputs/outputs are explicit artifacts; later stages never mutate earlier raw records (append-only notes & decisions).
 - Gate discipline: Advancement only when measurable criteria met (automated + manual confirmations).
 - Schema-first: Every artifact type has a JSON schema for validation & audit.
+- Dual-layer validation: Zod at request/API boundary; Ajv for internal artifact schemas (defense-in-depth & clearer error surfaces).
+- Feature-flagged rollout: New pipeline guarded by `RESEARCH_PIPELINE_V2` to allow incremental hardening before default enable.
 - Idempotent generation: Prompt chains can be safely re-run to refine within a stage without orphaning prior data.
 - Evidence integrity: Citations tracked centrally with DOI/metadata; claim → evidence linkage mandatory from Stage 3 forward.
-- Observability: Progress meter fed by gate evaluations; metrics per stage (latency, retry, coverage %).
+- Observability: Progress meter fed by gate evaluations; metrics per stage (latency, retry, coverage %, gate pass rate).
 
 ## 1. Stage Summary
 
@@ -260,9 +262,9 @@ mindmap
 ---
 
 End of draft.
-\n+## 15. Adapter Architecture (Quality & Time-To-Value Focus)
-\n+We modularize integrations so core pipeline progress (Stages 0–5) is never blocked by any single external data source. Interfaces (TypeScript) + minimal baseline implementations first; advanced behaviors can layer later.
-\n+| Adapter | Purpose | Minimal MVP (Week 1) | Later Enhancements |
+## 15. Adapter Architecture (Quality & Time-To-Value Focus)
+We modularize integrations so core pipeline progress (Stages 0–5) is never blocked by any single external data source. Interfaces (TypeScript) + minimal baseline implementations first; advanced behaviors can layer later.
+| Adapter | Purpose | Minimal MVP (Week 1) | Later Enhancements |
 |---------|---------|----------------------|--------------------|
 | CorpusSourceAdapter | Fetch sources (search) | ArXiv + CrossRef basic query | Google Scholar, Semantic Scholar, OpenAlex |
 | MetadataEnricher | Fill missing DOI/venue/year | CrossRef lookup | Unpaywall open-access status, citation counts |
@@ -274,9 +276,11 @@ End of draft.
 | CitationFormatter | Apply style | CSL via chosen style | Auto style drift detection |
 | GateEvaluator | Compute pass/fail | Deterministic JSON logic | Weighted heuristics + human override UI |
 | CacheLayer | Reduce latency | In‑memory LRU | Disk + persistent KV + adaptive TTL |
-\n+Principle: Each adapter has a contract + fallback returning partial but valid schema output (never throws uncaught).\n+\n+## 16. Fastest Quality Levers (High ROI, Low Build Time)
-\n+Ordered implementation to raise output reliability early:
-\n+1. Schema Validation (already planned) – prevents downstream corruption (Day 1).
+Principle: Each adapter has a contract + fallback returning partial but valid schema output (never throws uncaught).
+
+## 16. Fastest Quality Levers (High ROI, Low Build Time)
+Ordered implementation to raise output reliability early:
+1. Schema Validation (already planned) – prevents downstream corruption (Day 1).
 2. Deterministic GateEvaluator – enforces progression discipline (Day 1-2).
 3. Corpus Dedup (DOI + fuzzy title) – raises source precision (Day 2).
 4. Citation Normalization (CrossRef enrichment) – improves later outline credibility (Day 2-3).
@@ -284,9 +288,11 @@ End of draft.
 6. Page Reference Capture (when PDF available) – future-proofs for quote auditing (Stage 3).
 7. Citation Audit Module stub (detect missing vs orphan) – early feedback loop (Stage 4 start).
 8. Lightweight Metrics (coverage %, theme density) – surfaces quality regressions quickly.
-\n+Deferred (until core stable): advanced embeddings, multi-persona contradiction scans, semantic duplicate detection, automated novelty scoring.
-\n+## 17. Extended KPIs (Quality & Risk Monitoring)
-\n+| KPI | Definition | Stage(s) | Target |
+
+Deferred (until core stable): advanced embeddings, multi-persona contradiction scans, semantic duplicate detection, automated novelty scoring.
+
+## 17. Extended KPIs (Quality & Risk Monitoring)
+| KPI | Definition | Stage(s) | Target |
 |-----|------------|----------|--------|
 | Engine Coverage | Distinct search engines used | 1 | ≥2 (MVP), ≥3 later |
 | Venue Diversity Index | Simpson diversity over venue field | 1 | >0.6 |
@@ -299,8 +305,10 @@ End of draft.
 | Citation Audit Cleanliness | (Missing+Orphan)/Total citations | 5 | <2% |
 | Export Integrity Score | Schema-valid exports / attempts | All | >99% |
 | Median Stage Latency | Time start→gate pass | All | Track; reduce by 20% over 3 iterations |
-\n+## 18. Risk Register (Augmented)
-\n+| Risk | Impact | Likelihood | Mitigation | Owner Placeholder |
+
+## 18. Risk Register (Augmented)
+
+| Risk | Impact | Likelihood | Mitigation | Owner Placeholder |
 |------|--------|-----------|-----------|-------------------|
 | External API Drift (CrossRef/ArXiv) | Broken ingestion | Med | Versioned adapter + contract tests | Adapters Team |
 | Rate Limit Exhaustion | Latency/gaps | Med | Layered cache + exponential backoff | Infra |
@@ -312,9 +320,11 @@ End of draft.
 | Prompt Drift | Schema invalid returns | Med | Prompt version pin + regression suite | LLM Ops |
 | Duplicate Claims | Redundant outline | Med | Hash claim_text normalized | Stage 4 Lead |
 | Security: Malicious PDF | Execution exploit | Low | Sandbox extraction process | Security |
-\n+## 19. Prioritization Matrix (Quality vs Time)
-\n+Quadrants (Quick Wins emphasized first):
-\n+| Item | Effort | Impact | Quadrant | Action |
+
+## 19. Prioritization Matrix (Quality vs Time)
+
+Quadrants (Quick Wins emphasized first):
+| Item | Effort | Impact | Quadrant | Action |
 |------|--------|--------|----------|--------|
 | Schema Validation | XS | High | Quick Win | Implement Day 1 |
 | GateEvaluator | S | High | Quick Win | Implement Day 1 |
@@ -327,8 +337,9 @@ End of draft.
 | Persona Lenses | M | Med | Fill-In | Post Stage 4 |
 | Advanced Theming (embeddings) | L | High | Strategic | After baseline success |
 | Audio Abstract Export | S | Low | Fill-In | Optional Stage 5 |
-\n+## 20. Updated Immediate Next Actions (Supersedes Section 14)
-\n+1. Implement core schemas (Stage 0 & 1).  
+
+## 20. Updated Immediate Next Actions (Supersedes Section 14)
+1. Implement core schemas (Stage 0 & 1).  
 2. Build StageEngine base + GateEvaluator with JSON logic evaluator.  
 3. Implement CorpusSourceAdapter (ArXiv + CrossRef) + basic Corpus Dedup.  
 4. Add feature flag `RESEARCH_PIPELINE_V2` and stub endpoints.  

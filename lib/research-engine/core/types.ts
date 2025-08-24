@@ -14,7 +14,8 @@ export interface GateConfig {
 
 export interface StageConfig {
   stage: StageNumber;
-  name: string;
+  name: string; // short identifier e.g. "stage0.discovery"
+  description?: string;
   prompts: string[]; // ordered prompt chain identifiers
   gate: GateConfig;
   exports?: string[]; // export adapter identifiers

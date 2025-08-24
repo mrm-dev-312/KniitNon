@@ -2,6 +2,28 @@
  * Test utilities for handling NextResponse objects in Jest tests
  */
 import { NextResponse } from 'next/server';
+import { jest } from '@jest/globals';
+
+/**
+ * Centralized mock session data for tests
+ */
+export const mockSession = {
+  user: {
+    id: 'test-user-123',
+    email: 'test@example.com',
+    name: 'Test User',
+  },
+  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+};
+
+/**
+ * Mock useSession hook for consistent auth testing
+ */
+export const mockUseSession = (authenticated = true, loading = false) => ({
+  data: authenticated ? mockSession : null,
+  status: loading ? 'loading' : authenticated ? 'authenticated' : 'unauthenticated',
+  update: jest.fn(),
+});
 
 /**
  * Extract JSON data from a NextResponse object
@@ -67,7 +89,7 @@ export async function extractJsonFromNextResponse(response: NextResponse): Promi
  */
 export function createMockNextRequest(body: any, method = 'POST'): any {
   return {
-    json: jest.fn().mockResolvedValue(body),
+    json: jest.fn(() => Promise.resolve(body)) as any,
     method,
     headers: new Headers(),
     url: 'http://localhost:3000/test',

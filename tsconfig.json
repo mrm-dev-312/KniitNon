@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es5",
+  "target": "es5",
+  "downlevelIteration": true,
     "lib": [
       "dom",
       "dom.iterable",
@@ -23,19 +24,27 @@
         "./*"
       ]
     },
-    "plugins": [
+  "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ],
+  "types": ["jest", "node"],
+  "plugins": [
       {
         "name": "next"
       }
     ]
   },
   "include": [
-    "next-env.d.ts",
+  "next-env.d.ts",
+  "jest.global.d.ts",
+  "types/**/*.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "cypress"
   ]
 }

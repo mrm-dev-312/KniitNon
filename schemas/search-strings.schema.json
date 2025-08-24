@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "search-strings.schema.json",
+  "title": "SearchStringsCollection",
+  "type": "object",
+  "required": ["items"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {"$ref": "search-string.schema.json"},
+      "minItems": 1
+    },
+    "generatedAt": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "additionalProperties": false
+}

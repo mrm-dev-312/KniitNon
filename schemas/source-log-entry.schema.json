@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "source-log-entry.schema.json",
+  "title": "SourceLogEntry",
+  "type": "object",
+  "required": ["action", "source_id", "timestamp"],
+  "properties": {
+    "action": {"type": "string", "enum": ["added", "deduped", "updated", "removed"]},
+    "source_id": {"type": "string"},
+    "note": {"type": ["string", "null"]},
+    "timestamp": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

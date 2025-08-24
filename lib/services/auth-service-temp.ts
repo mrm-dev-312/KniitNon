@@ -2,7 +2,7 @@
 // Full implementation will be available after database migration
 
 import bcrypt from "bcryptjs"
-import prisma from "../db"
+import prisma from "../shared/db"
 
 export interface AuthenticateUserParams {
   identifier: string // email or username

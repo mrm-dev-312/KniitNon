@@ -1,0 +1,21 @@
+# Stage 0 Discovery configuration
+stage: 0
+name: stage0.discovery
+description: Initial discovery stage generating topic scope and research questions.
+# Prompt chain identifiers (implementation to be provided in prompt runner mapping)
+prompts:
+  - generate_topic_scope
+  - generate_research_questions
+  - refine_research_questions
+# Gate rules: require at least 3 research questions artifacts present
+# Using simple expression tokens handled by gate evaluator: 'count_research_questions >= 3'
+# For now we express using json-logic greater-or-equal operator
+# { ">=": [ {"var": "metrics.count_research_questions"}, 3 ] }
+# We'll embed as compact JSON logic in expr
+# metrics will be computed later; placeholder here
+metrics:
+  count_research_questions: count(artifacts.research_questions)
+
+gate:
+  rules:
+    - expr: '{ ">=": [ {"var": "metrics.count_research_questions"}, 3 ] }'

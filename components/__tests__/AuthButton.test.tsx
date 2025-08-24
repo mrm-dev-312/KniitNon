@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { AuthButton } from '../AuthButton';
+import { jest } from '@jest/globals';
+import { mockUseSession } from '../../__tests__/test-utils';
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({

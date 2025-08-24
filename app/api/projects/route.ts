@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/features/auth/auth';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
@@ -117,3 +117,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

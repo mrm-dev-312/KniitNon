@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs"
 import speakeasy from "speakeasy"
 import crypto from "crypto"
-import prisma from "../db"
+import prisma from "../shared/db"
 
 export interface AuthenticateUserParams {
   identifier: string // email or username

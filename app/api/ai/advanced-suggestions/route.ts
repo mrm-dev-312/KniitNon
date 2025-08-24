@@ -547,3 +547,4 @@ function generateFallbackGaps(analysisContext: any): ResearchGap[] {
     }
   ];
 }
+
